@@ -1,0 +1,14 @@
+\begin{thebibliography}{1}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Sudry and Karpas(2022)]{sudry2022learning}
+Matan Sudry and Erez Karpas.
+\newblock Learning to estimate search progress using sequence of states.
+\newblock In \emph{Proceedings of the International Conference on Automated
+  Planning and Scheduling}, volume~32, pages 362--370, 2022.
+
+\end{thebibliography}
