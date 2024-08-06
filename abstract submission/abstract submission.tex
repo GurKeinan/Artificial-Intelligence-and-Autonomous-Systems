@@ -1,7 +1,8 @@
 % \documentclass[a4paper,12pt]{extarticle}  % Supports 8pt, 9pt, 10pt, 11pt, 12pt, 14pt, 17pt and 20pt.
 \documentclass[12pt]{article}
 \setlength{\parindent}{0pt}
-\setlength{\parskip}{0.5em} % Adjust '1em' to your preference
+\setlength{\parskip}{0.1em} % Adjust '1em' to your preference
+
 
 % \usepackage[a4paper]{geometry}  % Set the page size to be A4 as default
 % \geometry{
@@ -111,23 +112,28 @@
 
 \section{Field of Research}
 
-Our project aims to predict search progress utilizing Graph Neural Networks (GNNs). We define search progress as the fraction of the total search effort that has already been expended. More formally, given a search algorithm $A$ and a heuristic search problem $P$, the search progress of algorithm $A$ solving problem $P$ after expanding $Gen_A(P)$ nodes with $Rem_A(P; Gen_A(P))$ remaining nodes to be expanded is defined as:
+Our project aims to predict search progress utilizing Graph Neural Networks (GNNs). Following previous work, we define search progress as the fraction of the total search effort that has already been expended. More formally, given a search algorithm $A$ and a heuristic search problem $P$, the search progress of algorithm $A$ solving problem $P$ after expanding $Gen_A(P)$ nodes with $Rem_A(P; Gen_A(P))$ remaining nodes to be expanded is defined as:
 \begin{equation}
   Prog_A(P) = \frac{Gen_A(P)}{Gen_A(P) + Rem_A(P; Gen_A(P))}
 \end{equation}
-Meaning - the fraction of the total search effort that has already been expended.
+Meaning - the fraction of the total search effort that has already been expended. \\
 
-We hypothesis that GNNs can learn the underlying structure of the search space and predict search progress more accurately than previous methods.
-\begin{enumerate}
-  \item Consider a search node with a large immediate receptive field. We would expect it to have a lower search progress, as the search algorithm opens up many new nodes close to the current node, meaning it needs more exploration to reach the goal.
-  \item Consider a search node with a small immediate receptive field. We would expect it to have a higher search progress, as the search algorithm is likely to be close to the goal \gur{maybe rephrase this} \naomi{Naomi this is your color, you can call it using \textbackslash naomi\{text\}}
-\end{enumerate}
+We hypothesis that GNNs can learn the underlying structure of the search space, and predict search progress more accurately than previous methods.
+
+Our intuition is that the receptive field of a search node can be used to predict search progress, as the size and qualities of these nodes might help determine whether we are in some plateau of search, closer to the goal, etc. As previous work has shown promise in predicting search progress based on features with deep learning methods such as LSTMs, we are interested in exploring the potential of GNNs in this domain.
+
+% \begin{enumerate}
+%   \item Consider a search node with a large immediate receptive field. We would expect it to have a lower search progress, as the search algorithm opens up many new nodes close to the current node, meaning it needs more exploration to reach the goal.
+%   \item Consider a search node with a small immediate receptive field. We would expect it to have a higher search progress, as the search algorithm is likely to be close to the goal \gur{maybe rephrase this} \naomi{Naomi this is your color, you can call it using \textbackslash naomi\{text\}}
+% \end{enumerate}
 
 \section{Literature Review}
 
+
+
 \section{Work Domain}
 
-Our project will be practical, focusing on creating aduquate datasets and training GNNs to predict search progress. We aim to create our own simple dataset of Blocksworld \gur{citation} problems, and use the A* search algorithm with different heuristics to solve them. We will then train a GNN to predict search progress based on the search nodes expanded by the A* algorithm.
+Our project will be practical, focusing on creating aduquate datasets and training GNNs to predict search progress. We aim to create our own simple dataset of Blocksworld problems in STRIPS \cite{strips1971}, and use the A* search algorithm with different heuristics to solve them. We will then train a GNN to predict search progress based on the search nodes expanded by the A* algorithm.
 
 \section{Work Outline}
 
@@ -153,18 +159,18 @@ Our project will be practical, focusing on creating aduquate datasets and traini
 The following is a rough outline of our project:
 \begin{enumerate}
   \item Create a dataset of Blocksworld problems. An instance of the Blocksworld problem consists of a set of blocks, initial and goal configurations of the blocks. The goal is to move the blocks from the initial configuration to the goal configuration using legal moves. We hope that by sampling initial and goal configurations randomly uniformly, we will get a diverse set of problems that will be challenging for the search algorithm. We refer the reader to Algorithm~\ref{alg:sample_blocksworld} for a method to efficiently sample Blocksworld instances.
-  \item Implement the A* search algorithm with different heuristics to solve the Blocksworld problems. Without limiting ourself or guarantying to use them all, we plan to use the $h_{max}$, $h_{add}$, and $h_{n}$ heuristics, where $h_{n}$ is the number of blocks that are not in their correct position.
+  \item Implement the A* search algorithm with different heuristics to solve the Blocksworld problems. Possible options considered at this stage are the $h_{max}$, $h_{add}$, and $h_{n}$ heuristics, where $h_{n}$ is the number of blocks that are not in their correct position.
   \item Running the A* algorithm on the Blocksworld problems, we will collect the labeled data for our GNN - for each node we expand, we will record the search progress.
   \item Train a GNN to predict search progress based on the search nodes expanded by the A* algorithm. We will use the PyTorch Geometric library to implement the GNN.
 \end{enumerate}
 
-\section{Initial Ideas}
+\section{Research Goals}
 
-\paragraph{Reasonable Results} We expect that the GNN will be able to predict search progress more accurately than previous methods. Our first baseline wll be to make our results comparable (and as we hope, better) than the previous methods mentioned on \citet{sudry2022learning}. Maybe we will implement the previous methods and compare them to our GNN, but this is not guaranteed.
+\paragraph{Reasonable Results} We expect that the GNN will be able to predict search progress more accurately than previous methods. We hope for improved or comparable results to the previous methods mentioned on \citet{sudry2022learning}. Maybe we will implement the previous methods and compare them to our GNN, but this is not guaranteed.
 
 \paragraph{Interpretability} We hope that the GNN will be able to learn the underlying structure of the search space and provide insights into the search progress. We will analyze the GNN's predictions and try to understand what it has learned.
 
-\paragraph{Generalization} We hope that the GNN will be able to generalize to new Blocksworld problems that it has not seen before. We will evaluate the GNN on a test set of Blocksworld problems that it has not seen during training. We hope to also vary the number of blocks in the Blocksworld problems and see how the GNN generalizes to problems of different sizes.
+\paragraph{Generalization} We hope that the GNN will be able to generalize to new Blocksworld problems that it has not seen before, with a varying number of blocks. Within time constraints, we find it reasonable to limit the scope of our project to Blocksworld problems and A* search. 
 
 \bibliography{references}
 
