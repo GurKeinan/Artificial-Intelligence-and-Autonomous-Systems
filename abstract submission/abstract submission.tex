@@ -115,7 +115,13 @@
 
 
 \section{Field of Research}
-In this project, we aim to predict search progress utilizing Graph Neural Networks (GNNs). Predicting search progress is a challenging problem in the field of heuristic search, as it requires understanding the underlying structure of the search space. It is also a useful tool for temporal planning and scheduling, as it can help estimate the time required to solve a problem. Previous work primarily consisted of consisted of heuristic estimations without a learning process. Recently, a study by \citet{sudry2022learning} showed that deep learning methods such as LSTMs can predict search progress based on extracted features from the search nodes induced by the guided search algorithm. In our work, we plan to take this a step further and explore the potential of GNNs in predicting search progress. We hypothesize that GNNs can learn the underlying structure of the search space and predict search progress more accurately than previous methods. 
+In this project, we aim to predict search progress utilizing Graph Neural Networks (GNNs). Predicting search progress is a challenging problem in the field of heuristic search, as it requires understanding the underlying structure of the search space. It is also a useful tool for temporal planning and scheduling, as it can help estimate the time required to solve a problem.
+
+Previous work including learning in planning problems primarily consisted of heuristic estimations and focus on the speed of the search. Recently, a study by \citet{sudry2022learning} showed that deep learning methods such as LSTMs can predict search progress, based on extracted features from the search nodes induced by the guided search algorithm. 
+
+This work expanded the field of progress estimation techniques, which traditionally relied on exact functions in the search space, such as heuristic values and expanded nodes \cite{thayer2012we}. It showed deep learning methods can surpass earlier baselines and generalize to new problems, based on the obseravtion that heuristic searches, especially with common search algorithms, domains or heuristics, behave similarly.
+
+In our work, we plan to take this a step further and explore the potential of GNNs in predicting search progress. We hypothesize that GNNs can learn the underlying structure of the search space and predict search progress more accurately than previous methods. 
 
 % Formally define search progress as the fraction of the total search effort that has already been expended. More formally, given a search algorithm $A$ and a heuristic search problem $P$, the search progress of algorithm $A$ solving problem $P$ after expanding $Gen_A(P)$ nodes with $Rem_A(P; Gen_A(P))$ remaining nodes to be expanded is defined as:
 % \begin{equation}
@@ -138,8 +144,13 @@ Learning in search has been studied in the past, with a focus on modeling the en
 
 \section{Work Domain}
 
-Our project will be practical, focusing on creating aduquate datasets and training GNNs to predict search progress. 
-We will opt to find a small enough domain for our project to be feasible, yet complex enough to be interesting. We will start from exploring existing datasets, hopefully written in python, and if we are left with no better choice, we will create our own dataset of planning problems. Afterwards, we will utilize a search algorithm, e.g. A*, to solve the problems and collect the labeled data and the induced graph of search nodes. As we want our data to be diverse, we will try to choose intersting enough problems and vary the planning algorithms and heuristics used. We will then train a GNN to predict search progress based on the search nodes expanded by the A* algorithm. We will use the PyTorch Geometric library to implement the GNN.
+Our project will be practical, focusing on creating adequate datasets and training GNNs to predict search progress. 
+
+We will opt to find a small enough domain for our project to be feasible, yet complex enough to be learnable by the GNN. Our work will be based upon either an existing dataset of planning problems or a dataset we will create ourselves. We will then use the A* search algorithm with different heuristics to solve these problems and collect labeled data for the progress prediction task.
+This specialized data, accessible in Python for deep learning frameworks, is our project's first contribution.
+
+We will then train a GNN to predict the search progress of a node in the search graph, based on the sequence of nodes expanded by the A* algorithm - the \textit{search history}.
+We will use the PyTorch Geometric library to implement the GNN.
 
 
 % We aim to create our own simple dataset of Blocksworld problems in STRIPS \cite{strips1971}, and use the A* search algorithm with different heuristics to solve them. We will then train a GNN to predict search progress based on the search nodes expanded by the A* algorithm.

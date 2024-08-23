@@ -1,4 +1,4 @@
-\begin{thebibliography}{1}
+\begin{thebibliography}{2}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -9,5 +9,10 @@
 Matan Sudry and Erez Karpas.
 \newblock Learning to estimate search progress using sequence of states.
 \newblock In \emph{Proceedings of the International Conference on Automated Planning and Scheduling}, volume~32, pages 362--370, 2022.
+
+\bibitem[Thayer et~al.(2012)Thayer, Stern, and Lelis]{thayer2012we}
+Jordan Thayer, Roni Stern, and Levi Lelis.
+\newblock Are we there yet?—estimating search progress.
+\newblock In \emph{Proceedings of the International Symposium on Combinatorial Search}, volume~3, pages 129--136, 2012.
 
 \end{thebibliography}
