@@ -1,18 +1,43 @@
-\begin{thebibliography}{2}
+\begin{thebibliography}{5}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
 
+\bibitem[Breyer and Korf(2008)]{breyer2008recent}
+T~Breyer and R~Korf.
+\newblock Recent results in analyzing the performance of heuristic search.
+\newblock In \emph{Proceedings of the First International Workshop on Search in
+  Artificial Intelligence and Robotics (held in conjunction with AAAI)}, pages
+  24--31, 2008.
+
+\bibitem[Scarselli et~al.(2008)Scarselli, Gori, Tsoi, Hagenbuchner, and
+  Monfardini]{scarselli2008graph}
+Franco Scarselli, Marco Gori, Ah~Chung Tsoi, Markus Hagenbuchner, and Gabriele
+  Monfardini.
+\newblock The graph neural network model.
+\newblock \emph{IEEE transactions on neural networks}, 20\penalty0
+  (1):\penalty0 61--80, 2008.
+
 \bibitem[Sudry and Karpas(2022)]{sudry2022learning}
 Matan Sudry and Erez Karpas.
 \newblock Learning to estimate search progress using sequence of states.
-\newblock In \emph{Proceedings of the International Conference on Automated Planning and Scheduling}, volume~32, pages 362--370, 2022.
+\newblock In \emph{Proceedings of the International Conference on Automated
+  Planning and Scheduling}, volume~32, pages 362--370, 2022.
 
 \bibitem[Thayer et~al.(2012)Thayer, Stern, and Lelis]{thayer2012we}
 Jordan Thayer, Roni Stern, and Levi Lelis.
 \newblock Are we there yet?—estimating search progress.
-\newblock In \emph{Proceedings of the International Symposium on Combinatorial Search}, volume~3, pages 129--136, 2012.
+\newblock In \emph{Proceedings of the International Symposium on Combinatorial
+  Search}, volume~3, pages 129--136, 2012.
+
+\bibitem[Wu et~al.(2020)Wu, Pan, Chen, Long, Zhang, and
+  Philip]{wu2020comprehensive}
+Zonghan Wu, Shirui Pan, Fengwen Chen, Guodong Long, Chengqi Zhang, and S~Yu
+  Philip.
+\newblock A comprehensive survey on graph neural networks.
+\newblock \emph{IEEE transactions on neural networks and learning systems},
+  32\penalty0 (1):\penalty0 4--24, 2020.
 
 \end{thebibliography}

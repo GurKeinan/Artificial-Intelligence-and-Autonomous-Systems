@@ -1,16 +1,7 @@
-% \documentclass[a4paper,12pt]{extarticle}  % Supports 8pt, 9pt, 10pt, 11pt, 12pt, 14pt, 17pt and 20pt.
-\documentclass[11pt]{article}
+\documentclass[12pt]{article}
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{0.1em} % Adjust '1em' to your preference
 
-
-% \usepackage[a4paper]{geometry}  % Set the page size to be A4 as default
-% \geometry{
-%  left=15mm,   % Sets the left margin
-%  right=15mm,  % Sets the right margin
-%  top=15mm,    % Sets the top margin
-%  bottom=15mm  % Sets the bottom margin
-% }
 \usepackage{geometry}
 \geometry{
   left=15mm,   % Sets the left margin
@@ -23,85 +14,10 @@
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
 
-
-\usepackage{graphicx} % Required for inserting images
-%In order to put images in the document enter the following command:
-%\includegraphics{path/to/image}
-%put it in figure environment to add caption and label
-%\begin{figure}[H]
-%    \centering
-%    \includegraphics{path/to/image}
-%    \caption{Caption}
-%    \label{fig:my_label}
-%\end{figure}
-
-%in order to put image alongside text enter the following command:
-% \begin{minipage}{0.5\textwidth} % Adjust the width to fit your needs
-%   \fbox{\includegraphics[width=\linewidth]{path/to/image}}
-% \end{minipage}%
-% \hfill % Optional: Adds horizontal space between the minipages
-% \begin{minipage}{0.5\textwidth} % Adjust the width accordingly
-%   Your text here
-% \end{minipage}
-%This sill put the image in a box and align it with the text, if you want to add a caption and label you can put the minipage in a figure environment. To remove the box remove the \fbox command.
-
-\usepackage{pdfpages}
-% \includepdf[pages=-]{path/to/pdf}
-
-
-\usepackage{xcolor}
-
-\usepackage{amsthm}
-\usepackage{amsfonts} % or \usepackage{amssymb}
-\usepackage{amsmath}
-\usepackage{mathtools}
-
 \usepackage{hyperref}
-\usepackage{float}
 
-% \usepackage{csquotes}  % Recommended for biblatex
-% \usepackage[backend=biber, style=numeric]{biblatex}
-% \addbibresource{references.bib}  % The filename of the bibliography
 \usepackage{natbib}
 \bibliographystyle{plainnat}
-
-
-\usepackage{etoolbox}  % Ensure this package is included
-
-% Define the \citeauthorplus command
-\newrobustcmd{\citeauthorplus}[1]{\citeauthor{#1} [\citenum{#1}]}
-
-
-% \theoremstyle{definition}
-\newtheorem{definition}{Definition}
-\newtheorem{theorem}{Theorem}
-\newtheorem{lemma}{Lemma}
-\newtheorem{remark}{Remark}
-\newtheorem{example}{Example}
-\newtheorem{reminder}{Reminder}
-\newtheorem{assumption}{Assumption}
-\newtheorem{note}{Note}
-\newtheorem{proposition}{Proposition}
-
-
-\usepackage[noend]{algpseudocode}
-\usepackage{algorithm}
-
-\algrenewcommand\algorithmicrequire{\textbf{Input:}}
-\algrenewcommand\algorithmicensure{\textbf{Output:}}
-
-\DeclareMathOperator*{\argmin}{arg\,min}
-\DeclareMathOperator*{\argmax}{arg\,max}
-\DeclarePairedDelimiter\abs{\lvert}{\rvert}%
-\DeclarePairedDelimiter\norm{\lVert}{\rVert}%
-
-
-\usepackage{xcolor}
-\newcommand{\naomi}[1]{{\color{red}{Naomi: #1}}}
-\newcommand{\gur}[1]{{\color{blue}{Gur: #1}}}
-\newcommand{\todo}[1]{{\color{orange}{TODO: #1}}}
-
-
 
 \title{Artificial Intelligence and Autonomous Systems 096208 - Abstract Submission}
 \author{Gur Keinan 213635899 \and Naomi Derel 325324994}
@@ -112,82 +28,18 @@
 
 \maketitle
 
+In this project, we aim to explore the potential of Graph Neural Networks (GNNs) in predicting search progress in heuristic search algorithms. The problem of predicting search progress can be formalized as follows: given a search algorithm $A$ and a heuristic search problem $P$, the search progress of algorithm $A$ solving problem $P$ after expanding $Gen_A(P)$ nodes with $Rem_A(P; Gen_A(P))$ remaining nodes to be opened is defined as $Prog_A(P) = \frac{Gen_A(P)}{Gen_A(P) + Rem_A(P; Gen_A(P))}$. Put into words - the fraction of the total search effort already expended. Predicting search progress is a challenging problem, as it requires understanding the underlying structure of the search space.
+An efficient solution to this problem can be beneficial in various applications, such as temporal planning and scheduling. It can help estimate the time required to solve a problem and, therefore, improve the efficiency of the planning process.
+
+\paragraph{Related Work} Previous work in predicting search progress is primarily divided into two main approaches: offline and online methods. Offline methods often rely on analyzing the search space \citep{breyer2008recent}, while online methods utilize the information the search nodes expanded by the search algorithm provide \citep{thayer2012we}.
+Recently, a study by \citet{sudry2022learning} showed that deep learning methods such as LSTMs can predict search progress based on extracted features from the search nodes induced by the guided search algorithm. In our work, we will also use deep learning-based methods in the form of Graph Neural Networks (GNNs) to predict search progress. GNNs have been shown to be effective in learning the graph structure and predicting node properties in the graph \citep{wu2020comprehensive, scarselli2008graph}. We can utilize this ability to predict search progress based on the search nodes expanded by the search algorithm, as one can represent the search space as a graph.
+
+\paragraph{Project Outline} Our project will be essentially practical, focusing on creating adequate datasets and training GNNs to predict search progress. We will find a small enough domain for our project to be feasible, yet complex enough to be exciting and challenging. We plan to use an existing planning problem dataset if we find one suited for our purposes or a dataset we will create ourselves. We will then use the A* search algorithm with different heuristics to solve these problems and collect labeled data for the progress prediction task. This specialized data, accessible in Python for deep learning frameworks, is our project's first contribution. Within time constraints, we will limit the scope of our project to Blocksworld problems and A* search.
+After collecting the data, we will train a GNN to predict the search progress of a node in the search graph, based on the graph of search nodes expanded by the A* algorithm. We will use the PyTorch Geometric library to implement the GNN.
+
+\paragraph{Research Goals} Our contribution will be threefold. First, we will design the GNN to be able to predict search progress more accurately than previous methods. We hope for improved or comparable results to the earlier methods mentioned in \citet{sudry2022learning}. Second, we will look for interpretability in the GNN's predictions, hoping that it will learn the underlying structure of the search space and provide insights into the search progress. Finally, we aim to build the GNN in a way that it will be able to generalize to new problems that it has not seen before, with different structures and sizes.
 
 
-\section{Field of Research}
-In this project, we aim to predict search progress utilizing Graph Neural Networks (GNNs). Predicting search progress is a challenging problem in the field of heuristic search, as it requires understanding the underlying structure of the search space. It is also a useful tool for temporal planning and scheduling, as it can help estimate the time required to solve a problem.
-
-Previous work including learning in planning problems primarily consisted of heuristic estimations and focus on the speed of the search. Recently, a study by \citet{sudry2022learning} showed that deep learning methods such as LSTMs can predict search progress, based on extracted features from the search nodes induced by the guided search algorithm. 
-
-This work expanded the field of progress estimation techniques, which traditionally relied on exact functions in the search space, such as heuristic values and expanded nodes \cite{thayer2012we}. It showed deep learning methods can surpass earlier baselines and generalize to new problems, based on the obseravtion that heuristic searches, especially with common search algorithms, domains or heuristics, behave similarly.
-
-In our work, we plan to take this a step further and explore the potential of GNNs in predicting search progress. We hypothesize that GNNs can learn the underlying structure of the search space and predict search progress more accurately than previous methods. 
-
-% Formally define search progress as the fraction of the total search effort that has already been expended. More formally, given a search algorithm $A$ and a heuristic search problem $P$, the search progress of algorithm $A$ solving problem $P$ after expanding $Gen_A(P)$ nodes with $Rem_A(P; Gen_A(P))$ remaining nodes to be expanded is defined as:
-% \begin{equation}
-%   Prog_A(P) = \frac{Gen_A(P)}{Gen_A(P) + Rem_A(P; Gen_A(P))}
-% \end{equation}
-% Meaning - the fraction of the total search effort that has already been expended. \\
-
-% We hypothesis that GNNs can learn the underlying structure of the search space, and predict search progress more accurately than previous methods.
-
-% Our intuition is that the receptive field of a search node can be used to predict search progress, as the size and qualities of these nodes might help determine whether we are in some plateau of search, closer to the goal, etc. As previous work has shown promise in predicting search progress based on features with deep learning methods such as LSTMs, we are interested in exploring the potential of GNNs in this domain.
-
-
-
-\section{Literature Review}
-
-Traditionally, there are two main approaches to predict search progress: offline and online methods. Offline methods are based on the analysis of the search space \cite{??,??}, while online methods are based on the search nodes expanded by the search algorithm \cite{??,??}. Recently, a study by \citet{sudry2022learning} showed that deep learning methods such as LSTMs can predict search progress based on extracted features from the search nodes induced by the guided search algorithm. 
-
-Learning in search has been studied in the past, with a focus on modeling the environment and the actions of the agent \cite{??,??}. As search algorithms induce a graph of search nodes, it is natural to consider the use of GNNs in this domain. GNNs have been shown to be effective in learning the structure of graphs and predicting properties of nodes in the graph \cite{??,??}. We believe that GNNs can be used to predict search progress based on the search nodes expanded by the search algorithm.
-
-
-\section{Work Domain}
-
-Our project will be practical, focusing on creating adequate datasets and training GNNs to predict search progress. 
-
-We will opt to find a small enough domain for our project to be feasible, yet complex enough to be learnable by the GNN. Our work will be based upon either an existing dataset of planning problems or a dataset we will create ourselves. We will then use the A* search algorithm with different heuristics to solve these problems and collect labeled data for the progress prediction task.
-This specialized data, accessible in Python for deep learning frameworks, is our project's first contribution.
-
-We will then train a GNN to predict the search progress of a node in the search graph, based on the sequence of nodes expanded by the A* algorithm - the \textit{search history}.
-We will use the PyTorch Geometric library to implement the GNN.
-
-
-% We aim to create our own simple dataset of Blocksworld problems in STRIPS \cite{strips1971}, and use the A* search algorithm with different heuristics to solve them. We will then train a GNN to predict search progress based on the search nodes expanded by the A* algorithm.
-
-\section{Work Outline}
-
-% \begin{algorithm}
-%   \caption{Sampling Blocksworld Instance}
-%   \label{alg:sample_blocksworld}
-%   \begin{algorithmic}[1]
-%     \Require Number of blocks $n$
-%     \Ensure Blocksworld instance
-%     \State Initialize $n$ blocks
-%     \State Sample two permutations $p_1 = (i_1, i_2, \ldots, i_n)$ and $p_2 = (j_1, j_2, \ldots, j_n)$ of $1, 2, \ldots, n$.
-%     \State Sample two binary vectors $b_1, b_2 \in \{0, 1\}^n$.
-
-%     \State In the initial configuration, place block $i_1$ on the table. For every $k = 2, 3, \ldots, n$, place block $i_k$ on block $i_{k-1}$ if $b_1[k] = 1$, otherwise place it on the table.
-%     \State In the goal configuration, place block $j_1$ on the table. For every $k = 2, 3, \ldots, n$, place block $j_k$ on block $j_{k-1}$ if $b_2[k] = 1$, otherwise place it on the table.
-
-%   \end{algorithmic}
-% \end{algorithm}
-
-% The following is a rough outline of our project:
-% \begin{enumerate}
-%   \item Create a dataset of Blocksworld problems. An instance of the Blocksworld problem consists of a set of blocks, initial and goal configurations of the blocks. The goal is to move the blocks from the initial configuration to the goal configuration using legal moves. We hope that by sampling initial and goal configurations randomly uniformly, we will get a diverse set of problems that will be challenging for the search algorithm. We refer the reader to Algorithm~\ref{alg:sample_blocksworld} for a method to efficiently sample Blocksworld instances.
-%   \item Implement the A* search algorithm with different heuristics to solve the Blocksworld problems. Possible options considered at this stage are the $h_{max}$, $h_{add}$, and $h_{n}$ heuristics, where $h_{n}$ is the number of blocks that are not in their correct position.
-%   \item Running the A* algorithm on the Blocksworld problems, we will collect the labeled data for our GNN - for each node we expand, we will record the search progress.
-%   \item Train a GNN to predict search progress based on the search nodes expanded by the A* algorithm. We will use the PyTorch Geometric library to implement the GNN.
-% \end{enumerate}
-
-\section{Research Goals}
-
-\paragraph{Reasonable Results} We expect that the GNN will be able to predict search progress more accurately than previous methods. We hope for improved or comparable results to the previous methods mentioned on \citet{sudry2022learning}. Maybe we will implement the previous methods and compare them to our GNN, but this is not guaranteed.
-
-\paragraph{Interpretability} We hope that the GNN will be able to learn the underlying structure of the search space and provide insights into the search progress. We will analyze the GNN's predictions and try to understand what it has learned.
-
-\paragraph{Generalization} We hope that the GNN will be able to generalize to new Blocksworld problems that it has not seen before, with a varying number of blocks. Within time constraints, we find it reasonable to limit the scope of our project to Blocksworld problems and A* search. 
 
 \bibliography{references}
 
