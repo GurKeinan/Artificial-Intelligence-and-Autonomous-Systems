@@ -1,7 +1,7 @@
 PWD c:\Users\gurgu\OneDrive - Technion\semester 6\Artificial Intelligence and Autonomous Systems\abstract submission
 INPUT C:\Users\gurgu\AppData\Local\MiKTeX\miktex\data\le\pdftex\pdflatex.fmt
-INPUT c:\Users\gurgu\OneDrive - Technion\semester 6\Artificial Intelligence and Autonomous Systems\abstract submission\abstract submission.tex
-OUTPUT abstract submission.log
+INPUT c:\Users\gurgu\OneDrive - Technion\semester 6\Artificial Intelligence and Autonomous Systems\abstract submission\Project_Proposal_213635899_325324994.tex
+OUTPUT Project_Proposal_213635899_325324994.log
 INPUT C:\Users\gurgu\AppData\Local\Programs\MiKTeX\tex\latex\base\article.cls
 INPUT C:\Users\gurgu\AppData\Local\Programs\MiKTeX\tex\latex\base\article.cls
 INPUT C:\Users\gurgu\AppData\Local\Programs\MiKTeX\tex\latex\base\size12.clo
@@ -101,18 +101,18 @@ INPUT C:\Users\gurgu\AppData\Local\Programs\MiKTeX\tex\latex\psnfss\ot1ptm.fd
 INPUT C:\Users\gurgu\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\times\ptmr7t.tfm
 INPUT C:\Users\gurgu\AppData\Local\Programs\MiKTeX\tex\latex\l3backend\l3backend-pdftex.def
 INPUT C:\Users\gurgu\AppData\Local\Programs\MiKTeX\tex\latex\l3backend\l3backend-pdftex.def
-INPUT .\abstract submission.aux
-INPUT .\abstract submission.aux
-INPUT abstract submission.aux
-OUTPUT abstract submission.aux
-INPUT .\abstract submission.out
-INPUT .\abstract submission.out
-INPUT abstract submission.out
-INPUT abstract submission.out
-INPUT .\abstract submission.out
-INPUT .\abstract submission.out
-OUTPUT abstract submission.out
-OUTPUT abstract submission.pdf
+INPUT .\Project_Proposal_213635899_325324994.aux
+INPUT .\Project_Proposal_213635899_325324994.aux
+INPUT Project_Proposal_213635899_325324994.aux
+OUTPUT Project_Proposal_213635899_325324994.aux
+INPUT .\Project_Proposal_213635899_325324994.out
+INPUT .\Project_Proposal_213635899_325324994.out
+INPUT Project_Proposal_213635899_325324994.out
+INPUT Project_Proposal_213635899_325324994.out
+INPUT .\Project_Proposal_213635899_325324994.out
+INPUT .\Project_Proposal_213635899_325324994.out
+OUTPUT Project_Proposal_213635899_325324994.out
+OUTPUT Project_Proposal_213635899_325324994.pdf
 INPUT C:\Users\gurgu\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\times\ptmr7t.tfm
 INPUT C:\Users\gurgu\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\times\ptmr7t.tfm
 INPUT C:\Users\gurgu\AppData\Local\Programs\MiKTeX\fonts\tfm\public\cm\cmr12.tfm
@@ -137,9 +137,9 @@ INPUT C:\Users\gurgu\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\times\ptmr7t.v
 INPUT C:\Users\gurgu\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\times\ptmr8r.tfm
 INPUT C:\Users\gurgu\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\times\ptmb7t.vf
 INPUT C:\Users\gurgu\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\times\ptmb8r.tfm
-INPUT .\abstract submission.bbl
-INPUT .\abstract submission.bbl
-INPUT abstract submission.bbl
+INPUT .\Project_Proposal_213635899_325324994.bbl
+INPUT .\Project_Proposal_213635899_325324994.bbl
+INPUT Project_Proposal_213635899_325324994.bbl
 INPUT C:\Users\gurgu\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\times\ptmr7t.tfm
 INPUT C:\Users\gurgu\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\times\ptmb7t.tfm
 INPUT C:\Users\gurgu\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\times\ptmri7t.tfm
@@ -147,9 +147,9 @@ INPUT C:\Users\gurgu\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\times\ptmb7t.v
 INPUT C:\Users\gurgu\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\times\ptmb8r.tfm
 INPUT C:\Users\gurgu\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\times\ptmri7t.vf
 INPUT C:\Users\gurgu\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\times\ptmri8r.tfm
-INPUT abstract submission.aux
-INPUT .\abstract submission.out
-INPUT .\abstract submission.out
+INPUT Project_Proposal_213635899_325324994.aux
+INPUT .\Project_Proposal_213635899_325324994.out
+INPUT .\Project_Proposal_213635899_325324994.out
 INPUT C:\Users\gurgu\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\cm\cmmi12.pfb
 INPUT C:\Users\gurgu\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\cm\cmmi12.pfb
 INPUT C:\Users\gurgu\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\cm\cmmi6.pfb

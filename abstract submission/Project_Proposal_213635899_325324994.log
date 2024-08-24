@@ -1,10 +1,10 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (MiKTeX 24.4) (preloaded format=pdflatex 2024.6.23)  24 AUG 2024 19:15
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (MiKTeX 24.4) (preloaded format=pdflatex 2024.6.23)  24 AUG 2024 19:16
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
  %&-line parsing enabled.
-**"c:/Users/gurgu/OneDrive - Technion/semester 6/Artificial Intelligence and Autonomous Systems/abstract submission/abstract submission.tex"
-(c:/Users/gurgu/OneDrive - Technion/semester 6/Artificial Intelligence and Autonomous Systems/abstract submission/abstract submission.tex
+**"c:/Users/gurgu/OneDrive - Technion/semester 6/Artificial Intelligence and Autonomous Systems/abstract submission/Project_Proposal_213635899_325324994.tex"
+(c:/Users/gurgu/OneDrive - Technion/semester 6/Artificial Intelligence and Autonomous Systems/abstract submission/Project_Proposal_213635899_325324994.tex
 LaTeX2e <2024-06-01> patch level 1
 L3 programming layer <2024-05-27>
 (C:\Users\gurgu\AppData\Local\Programs\MiKTeX\tex/latex/base\article.cls
@@ -198,8 +198,8 @@ File: ot1ptm.fd 2001/06/04 font definitions for OT1/ptm.
 File: l3backend-pdftex.def 2024-05-08 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count286
 \l__pdf_internal_box=\box52
-) (abstract submission.aux)
-\openout1 = `"abstract submission.aux"'.
+) (Project_Proposal_213635899_325324994.aux)
+\openout1 = `Project_Proposal_213635899_325324994.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 27.
 LaTeX Font Info:    ... okay on input line 27.
@@ -255,9 +255,9 @@ LaTeX Font Info:    ... okay on input line 27.
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
 Package hyperref Info: Link coloring OFF on input line 27.
-(abstract submission.out) (abstract submission.out)
+(Project_Proposal_213635899_325324994.out) (Project_Proposal_213635899_325324994.out)
 \@outlinefile=\write3
-\openout3 = `"abstract submission.out"'.
+\openout3 = `Project_Proposal_213635899_325324994.out'.
 
 LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <14.4> on input line 30.
@@ -273,26 +273,26 @@ LaTeX Font Info:    External font `cmex10' loaded for size
 
 [1
 
-{C:/Users/gurgu/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{C:/Users/gurgu/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/base/8r.enc}] (abstract submission.bbl)
+{C:/Users/gurgu/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{C:/Users/gurgu/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/base/8r.enc}] (Project_Proposal_213635899_325324994.bbl)
 
-[2] (abstract submission.aux)
+[2] (Project_Proposal_213635899_325324994.aux)
  ***********
 LaTeX2e <2024-06-01> patch level 1
 L3 programming layer <2024-05-27>
  ***********
-Package rerunfilecheck Info: File `"abstract submission".out' has not changed.
+Package rerunfilecheck Info: File `Project_Proposal_213635899_325324994.out' has not changed.
 (rerunfilecheck)             Checksum: D41D8CD98F00B204E9800998ECF8427E;0.
  ) 
 Here is how much of TeX's memory you used:
- 9632 strings out of 473920
- 155919 string characters out of 5726974
+ 9629 strings out of 473920
+ 156229 string characters out of 5726974
  1939908 words of memory out of 5000000
- 32378 multiletter control sequences out of 15000+600000
+ 32375 multiletter control sequences out of 15000+600000
  571916 words of font info for 61 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,6n,79p,832b,446s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,6n,79p,849b,446s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/gurgu/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi12.pfb><C:/Users/gurgu/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi6.pfb><C:/Users/gurgu/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/gurgu/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/gurgu/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/gurgu/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/utmb8a.pfb><C:/Users/gurgu/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/utmr8a.pfb><C:/Users/gurgu/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/utmri8a.pfb>
-Output written on "abstract submission.pdf" (2 pages, 103425 bytes).
+Output written on Project_Proposal_213635899_325324994.pdf (2 pages, 103425 bytes).
 PDF statistics:
  83 PDF objects out of 1000 (max. 8388607)
  13 named destinations out of 1000 (max. 500000)

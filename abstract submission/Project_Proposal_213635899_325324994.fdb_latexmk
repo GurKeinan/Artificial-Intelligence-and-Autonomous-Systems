@@ -1,13 +1,13 @@
 # Fdb version 4
-["bibtex abstract submission"] 1724515944.86383 "abstract submission.aux" "abstract submission.bbl" "abstract submission" 1724516107.00984 0
+["bibtex Project_Proposal_213635899_325324994"] 1724516185.7563 "Project_Proposal_213635899_325324994.aux" "Project_Proposal_213635899_325324994.bbl" "Project_Proposal_213635899_325324994" 1724516189.06909 0
   "./references.bib" 1724515770 2576 f0defe0b6bb7a07bc8bf279a138c2fe1 ""
   "C:/Users/gurgu/AppData/Local/Programs/MiKTeX/bibtex/bst/natbib/plainnat.bst" 1284455456 26816 ffe5423d2019860bad9f54bc402fac15 ""
-  "abstract submission.aux" 1724516105 1232 9c334d9cb0fc6ebe095314020b621003 "pdflatex"
+  "Project_Proposal_213635899_325324994.aux" 1724516187 1232 9c334d9cb0fc6ebe095314020b621003 "pdflatex"
   (generated)
-  "abstract submission.bbl"
-  "abstract submission.blg"
+  "Project_Proposal_213635899_325324994.bbl"
+  "Project_Proposal_213635899_325324994.blg"
   (rewritten before read)
-["pdflatex"] 1724516104.23817 "c:/Users/gurgu/OneDrive - Technion/semester 6/Artificial Intelligence and Autonomous Systems/abstract submission/abstract submission.tex" "abstract submission.pdf" "abstract submission" 1724516107.01217 0
+["pdflatex"] 1724516186.32056 "c:/Users/gurgu/OneDrive - Technion/semester 6/Artificial Intelligence and Autonomous Systems/abstract submission/Project_Proposal_213635899_325324994.tex" "Project_Proposal_213635899_325324994.pdf" "Project_Proposal_213635899_325324994" 1724516189.07113 0
   "C:/Users/gurgu/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map" 1720556342 188054 2a95acd4b1c5ffbfda2bf2e603527c6c ""
   "C:/Users/gurgu/AppData/Local/MiKTeX/miktex/data/le/pdftex/pdflatex.fmt" 1719164592 24264027 e2abe42ca6224ebceee56b61d7344aac ""
   "C:/Users/gurgu/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/base/8r.enc" 1458477487 4993 80dc9bab7f31fb78a000ccfed0e27cab ""
@@ -83,14 +83,14 @@
   "C:/Users/gurgu/AppData/Local/Programs/MiKTeX/tex/latex/refcount/refcount.sty" 1576437552 9878 9e94e8fa600d95f9c7731bb21dfb67a4 ""
   "C:/Users/gurgu/AppData/Local/Programs/MiKTeX/tex/latex/rerunfilecheck/rerunfilecheck.sty" 1657800696 9714 ba3194bd52c8499b3f1e3eb91d409670 ""
   "C:/Users/gurgu/AppData/Local/Programs/MiKTeX/tex/latex/url/url.sty" 1388494052 12796 8edb7d69a20b857904dd0ea757c14ec9 ""
-  "abstract submission.aux" 1724516105 1232 9c334d9cb0fc6ebe095314020b621003 "pdflatex"
-  "abstract submission.bbl" 1724515945 2210 6fea338b9cbaf0ec13565e6a900dbbe2 "bibtex abstract submission"
-  "abstract submission.out" 1724516105 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
-  "abstract submission.tex" 1724516102 4453 532a93050fbbc3f369483264b5c44c6d ""
-  "c:/Users/gurgu/OneDrive - Technion/semester 6/Artificial Intelligence and Autonomous Systems/abstract submission/abstract submission.tex" 1724516102 4453 532a93050fbbc3f369483264b5c44c6d ""
+  "Project_Proposal_213635899_325324994.aux" 1724516187 1232 9c334d9cb0fc6ebe095314020b621003 "pdflatex"
+  "Project_Proposal_213635899_325324994.bbl" 1724516186 2210 6fea338b9cbaf0ec13565e6a900dbbe2 "bibtex Project_Proposal_213635899_325324994"
+  "Project_Proposal_213635899_325324994.out" 1724516187 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
+  "Project_Proposal_213635899_325324994.tex" 1724516102 4453 532a93050fbbc3f369483264b5c44c6d ""
+  "c:/Users/gurgu/OneDrive - Technion/semester 6/Artificial Intelligence and Autonomous Systems/abstract submission/Project_Proposal_213635899_325324994.tex" 1724516102 4453 532a93050fbbc3f369483264b5c44c6d ""
   (generated)
-  "abstract submission.aux"
-  "abstract submission.log"
-  "abstract submission.out"
-  "abstract submission.pdf"
+  "Project_Proposal_213635899_325324994.aux"
+  "Project_Proposal_213635899_325324994.log"
+  "Project_Proposal_213635899_325324994.out"
+  "Project_Proposal_213635899_325324994.pdf"
   (rewritten before read)
