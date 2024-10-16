@@ -1,6 +1,9 @@
 from typing import List, Tuple, Optional, Callable, Dict
 import heapq
+import os
 import pickle
+
+from tqdm import tqdm
 from sliding_puzzle_generator import SlidingPuzzleState, generate_sliding_puzzle_problem
 from sliding_puzzle_heuristics import manhattan_distance, misplaced_tiles, h_max
 
@@ -131,33 +134,27 @@ def calculate_progress(root: SearchNode):
 
     update_progress(root)
 
+SIZE = 7
+NUM_MOVES = 8
+SAMPLES = 100
 
 def main():
-    size = 3
-    num_moves = 3  # Reduced for a smaller search tree
-    initial_state, goal_state = generate_sliding_puzzle_problem(size, num_moves)
 
-    print("Initial State:")
-    print(initial_state)
-    print("\nGoal State:")
-    print(goal_state)
+    for sample_idx in tqdm(range(SAMPLES)):
 
-    solution, search_tree_root = a_star(initial_state, goal_state, h_max)
+        initial_state, goal_state = generate_sliding_puzzle_problem(SIZE, NUM_MOVES)
+        solution, search_tree_root = a_star(initial_state, goal_state, h_max)
 
-    # Calculate progress for each node
-    calculate_progress(search_tree_root)
+        # Calculate progress for each node
+        calculate_progress(search_tree_root)
 
-    if solution:
-        print(f"\nSolution found in {len(solution)} moves:")
-        print(" -> ".join(solution))
-    else:
-        print("\nNo solution found.")
+        # print_search_tree(search_tree_root)
+        
+        if not os.path.exists(f"dataset/sp_hmax_size_{SIZE}_moves_{NUM_MOVES}"):
+            os.makedirs(f"dataset/sp_hmax_size_{SIZE}_moves_{NUM_MOVES}")
 
-    print("\nSearch Tree:")
-    print_search_tree(search_tree_root)
-    
-    with open("search_tree.pkl", "wb") as f:
-        pickle.dump(search_tree_root, f)
+        with open(f"dataset/sp_hmax_size_{SIZE}_moves_{NUM_MOVES}/sample_{sample_idx}.pkl", "wb") as f:
+            pickle.dump(search_tree_root, f)
 
 
 if __name__ == "__main__":
