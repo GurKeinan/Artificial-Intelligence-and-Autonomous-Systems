@@ -21,7 +21,7 @@ class TreeDataset(InMemoryDataset):
         data_list = []
         # Iterate through the pickle files
         for file_name in os.listdir(self.root_dir):
-            if file_name.endswith('.pickle'):
+            if file_name.endswith('.pkl'):
                 with open(os.path.join(self.root_dir, file_name), 'rb') as f:
                     tree = pickle.load(f)
                     graph_data = tree_to_graph(tree)
