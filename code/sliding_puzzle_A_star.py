@@ -2,7 +2,7 @@ from typing import List, Tuple, Optional, Callable, Dict
 import heapq
 import pickle
 from sliding_puzzle_generator import SlidingPuzzleState, generate_sliding_puzzle_problem
-
+from sliding_puzzle_heuristics import manhattan_distance, misplaced_tiles, h_max, h_ff
 
 class SearchNode:
     def __init__(self, state: SlidingPuzzleState, serial_number: int, g: int, h: int, h_0: int, parent: Optional['SearchNode'] = None,
@@ -24,15 +24,6 @@ class SearchNode:
 
     def __lt__(self, other: 'SearchNode') -> bool:
         return self.f < other.f
-
-
-def manhattan_distance(state: SlidingPuzzleState, goal: SlidingPuzzleState) -> int:
-    """
-    Calculate the Manhattan distance heuristic.
-    This is a placeholder and will be implemented later.
-    """
-    return 0  # Placeholder return value
-
 
 def a_star(initial_state: SlidingPuzzleState,
            goal_state: SlidingPuzzleState,
@@ -142,8 +133,8 @@ def calculate_progress(root: SearchNode):
 
 
 def main():
-    size = 3
-    num_moves = 5  # Reduced for a smaller search tree
+    size = 5
+    num_moves = 10  # Reduced for a smaller search tree
     initial_state, goal_state = generate_sliding_puzzle_problem(size, num_moves)
 
     print("Initial State:")
@@ -151,7 +142,7 @@ def main():
     print("\nGoal State:")
     print(goal_state)
 
-    solution, search_tree_root = a_star(initial_state, goal_state, manhattan_distance)
+    solution, search_tree_root = a_star(initial_state, goal_state, h_max)
 
     # Calculate progress for each node
     calculate_progress(search_tree_root)
