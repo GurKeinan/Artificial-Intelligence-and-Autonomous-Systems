@@ -2,7 +2,7 @@ from typing import List, Tuple, Optional, Callable, Dict
 import heapq
 import pickle
 from sliding_puzzle_generator import SlidingPuzzleState, generate_sliding_puzzle_problem
-from sliding_puzzle_heuristics import manhattan_distance, misplaced_tiles, h_max, h_ff
+from sliding_puzzle_heuristics import manhattan_distance, misplaced_tiles, h_max
 
 class SearchNode:
     def __init__(self, state: SlidingPuzzleState, serial_number: int, g: int, h: int, h_0: int, parent: Optional['SearchNode'] = None,
@@ -102,7 +102,7 @@ def reconstruct_path(node: SearchNode) -> List[str]:
 
 def print_search_tree(node: SearchNode, depth: int = 0):
     indent = "  " * depth
-    # print(f"{indent}State:\n{indent}{node.state}")
+    print(f"{indent}State:\n{indent}{node.state}")
     print(f"{indent}Serial: {node.serial_number}")
     print(f"{indent}g: {node.g}, h: {node.h}, f: {node.f}")
     print(f"{indent}Child count: {node.child_count}")
@@ -133,8 +133,8 @@ def calculate_progress(root: SearchNode):
 
 
 def main():
-    size = 5
-    num_moves = 10  # Reduced for a smaller search tree
+    size = 3
+    num_moves = 3  # Reduced for a smaller search tree
     initial_state, goal_state = generate_sliding_puzzle_problem(size, num_moves)
 
     print("Initial State:")
