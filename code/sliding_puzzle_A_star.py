@@ -5,11 +5,12 @@ from sliding_puzzle_generator import SlidingPuzzleState, generate_sliding_puzzle
 
 
 class SearchNode:
-    def __init__(self, state: SlidingPuzzleState, serial_number: int, g: int, h: int, parent: Optional['SearchNode'] = None,
+    def __init__(self, state: SlidingPuzzleState, serial_number: int, g: int, h: int, h_0: int, parent: Optional['SearchNode'] = None,
                  action: Optional[str] = None):
         self.state = state
         self.g = g
         self.h = h
+        self.h_0 = h_0
         self.f = g + h
         self.parent = parent
         self.action = action
@@ -37,7 +38,9 @@ def a_star(initial_state: SlidingPuzzleState,
            goal_state: SlidingPuzzleState,
            heuristic: Callable[[SlidingPuzzleState, SlidingPuzzleState], int]) -> Tuple[
     Optional[List[str]], SearchNode]:
-    root = SearchNode(initial_state, 0, 0, heuristic(initial_state, goal_state))
+    
+    root_h = heuristic(initial_state, goal_state)
+    root = SearchNode(initial_state, 0, 0, root_h, root_h)
     open_set = []
     closed_set = set()
     node_dict: Dict[SlidingPuzzleState, SearchNode] = {initial_state: root}
@@ -88,7 +91,7 @@ def a_star(initial_state: SlidingPuzzleState,
 
             if neighbor_state not in node_dict or neighbor_g < node_dict[neighbor_state].g:
                 serial_number += 1
-                neighbor_node = SearchNode(neighbor_state, serial_number, neighbor_g, neighbor_h, current_node, action)
+                neighbor_node = SearchNode(neighbor_state, serial_number, neighbor_g, neighbor_h, root_h, current_node, action)
                 node_dict[neighbor_state] = neighbor_node
                 current_node.children.append(neighbor_node)
                 current_node.child_count += 1
@@ -114,8 +117,28 @@ def print_search_tree(node: SearchNode, depth: int = 0):
     print(f"{indent}Child count: {node.child_count}")
     print(f"{indent}Min h seen: {node.min_h_seen}, Nodes since min h: {node.nodes_since_min_h}")
     print(f"{indent}Max f seen: {node.max_f_seen}, Nodes since max f: {node.nodes_since_max_f}")
+    print(f"{indent}Progress: {node.progress}")
     for child in node.children:
         print_search_tree(child, depth + 1)
+
+
+def calculate_progress(root: SearchNode):
+    """Calculate the progress of each node in the search tree.
+
+    Args:
+        root (SearchNode): The root node of the search tree.
+    """
+    def count_nodes(node: SearchNode) -> int:
+        return 1 + sum(count_nodes(child) for child in node.children)
+
+    total_nodes = count_nodes(root)
+
+    def update_progress(node: SearchNode):
+        node.progress = node.serial_number / total_nodes
+        for child in node.children:
+            update_progress(child)
+
+    update_progress(root)
 
 
 def main():
@@ -130,6 +153,9 @@ def main():
 
     solution, search_tree_root = a_star(initial_state, goal_state, manhattan_distance)
 
+    # Calculate progress for each node
+    calculate_progress(search_tree_root)
+
     if solution:
         print(f"\nSolution found in {len(solution)} moves:")
         print(" -> ".join(solution))
@@ -138,8 +164,8 @@ def main():
 
     print("\nSearch Tree:")
     print_search_tree(search_tree_root)
-
-    with open("search_tree.pickle", "wb") as f:
+    
+    with open("search_tree.pkl", "wb") as f:
         pickle.dump(search_tree_root, f)
 
 
