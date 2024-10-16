@@ -1,2 +1,6 @@
 
 *.pyc
+*.bbl
+*.gz
+.DS_Store
+__pycache__
