@@ -1,8 +1,11 @@
 from typing import List, Tuple, Optional, Callable, Dict
 import heapq
+import os
 import pickle
+
+from tqdm import tqdm
 from sliding_puzzle_generator import SlidingPuzzleState, generate_sliding_puzzle_problem
-from sliding_puzzle_heuristics import manhattan_distance, misplaced_tiles, h_max, h_ff
+from sliding_puzzle_heuristics import manhattan_distance, misplaced_tiles, h_max
 
 class SearchNode:
     def __init__(self, state: SlidingPuzzleState, serial_number: int, g: int, h: int, h_0: int, parent: Optional['SearchNode'] = None,
@@ -102,7 +105,7 @@ def reconstruct_path(node: SearchNode) -> List[str]:
 
 def print_search_tree(node: SearchNode, depth: int = 0):
     indent = "  " * depth
-    # print(f"{indent}State:\n{indent}{node.state}")
+    print(f"{indent}State:\n{indent}{node.state}")
     print(f"{indent}Serial: {node.serial_number}")
     print(f"{indent}g: {node.g}, h: {node.h}, f: {node.f}")
     print(f"{indent}Child count: {node.child_count}")
@@ -131,33 +134,27 @@ def calculate_progress(root: SearchNode):
 
     update_progress(root)
 
+SIZE = 7
+NUM_MOVES = 8
+SAMPLES = 100
 
 def main():
-    size = 5
-    num_moves = 10  # Reduced for a smaller search tree
-    initial_state, goal_state = generate_sliding_puzzle_problem(size, num_moves)
 
-    print("Initial State:")
-    print(initial_state)
-    print("\nGoal State:")
-    print(goal_state)
+    for sample_idx in tqdm(range(SAMPLES)):
 
-    solution, search_tree_root = a_star(initial_state, goal_state, h_max)
+        initial_state, goal_state = generate_sliding_puzzle_problem(SIZE, NUM_MOVES)
+        solution, search_tree_root = a_star(initial_state, goal_state, h_max)
 
-    # Calculate progress for each node
-    calculate_progress(search_tree_root)
+        # Calculate progress for each node
+        calculate_progress(search_tree_root)
 
-    if solution:
-        print(f"\nSolution found in {len(solution)} moves:")
-        print(" -> ".join(solution))
-    else:
-        print("\nNo solution found.")
+        # print_search_tree(search_tree_root)
+        
+        if not os.path.exists(f"dataset/sp_hmax_size_{SIZE}_moves_{NUM_MOVES}"):
+            os.makedirs(f"dataset/sp_hmax_size_{SIZE}_moves_{NUM_MOVES}")
 
-    print("\nSearch Tree:")
-    print_search_tree(search_tree_root)
-    
-    with open("search_tree.pkl", "wb") as f:
-        pickle.dump(search_tree_root, f)
+        with open(f"dataset/sp_hmax_size_{SIZE}_moves_{NUM_MOVES}/sample_{sample_idx}.pkl", "wb") as f:
+            pickle.dump(search_tree_root, f)
 
 
 if __name__ == "__main__":

@@ -1,92 +1,114 @@
 import torch
+import torch.nn.functional as F
 from torch_geometric.loader import DataLoader
 from torch.optim import Adam
-import torch.nn.functional as F
-from torch_geometric.nn import GCNConv
+from torch_geometric.nn import GCNConv, GATConv
+from torch_geometric.nn import global_mean_pool
 
 from read_tree_search import TreeDataset
 from sliding_puzzle_A_star import SearchNode
 
-def get_dataloaders(root_dir, batch_size=8, test_ratio=0.2):
-    # Load
-    dataset = TreeDataset(root_dir=root_dir, test_ratio=test_ratio)
-    print(f"Dataset size: {len(dataset)}")
-    # Create dataloaders:
-    loader = DataLoader(dataset, batch_size, shuffle=True)
-    return loader
-
-
-class GCN(torch.nn.Module):
-    def __init__(self, input_dim, hidden_dim, output_dim):
-        super(GCN, self).__init__()
-        self.conv1 = GCNConv(input_dim, hidden_dim)
-        self.conv2 = GCNConv(hidden_dim, output_dim)
+class ImprovedGNN(torch.nn.Module):
+    def __init__(self, input_dim, hidden_dim, num_layers=4, heads=4, dropout=0.2):
+        super(ImprovedGNN, self).__init__()
+        self.num_layers = num_layers
+        self.convs = torch.nn.ModuleList()
+        self.layer_norms = torch.nn.ModuleList()
+        
+        # Input projection
+        self.input_proj = torch.nn.Linear(input_dim, hidden_dim)
+        
+        # Input layer
+        self.convs.append(GATConv(hidden_dim, hidden_dim, heads=heads, concat=False))
+        self.layer_norms.append(torch.nn.LayerNorm(hidden_dim))
+        
+        # Hidden layers
+        for _ in range(num_layers - 2):
+            self.convs.append(GATConv(hidden_dim, hidden_dim, heads=heads, concat=False))
+            self.layer_norms.append(torch.nn.LayerNorm(hidden_dim))
+        
+        # Output layer
+        self.convs.append(GCNConv(hidden_dim, 1))
+        
+        self.dropout = dropout
 
     def forward(self, data):
-        x, edge_index = data.x, data.edge_index
-        x = F.relu(self.conv1(x, edge_index))
-        x = self.conv2(x, edge_index)  # Output is node-level regression predictions
-        return x
+        x, edge_index, batch = data.x, data.edge_index, data.batch
+        
+        # Project input to hidden dimension
+        x = self.input_proj(x)
+        
+        for i in range(self.num_layers - 1):
+            identity = x
+            x = self.convs[i](x, edge_index)
+            x = self.layer_norms[i](x)
+            x = F.relu(x)
+            x = F.dropout(x, p=self.dropout, training=self.training)
+            
+            # Residual connection
+            x = x + identity
+        
+        # Output layer
+        x = self.convs[-1](x, edge_index)
+        
+        # No need for global pooling, we want node-level predictions
+        return torch.sigmoid(x).view(-1)
+
+def get_dataloaders(root_dir, batch_size=32, test_ratio=0.2):
+    dataset = TreeDataset(root_dir=root_dir, test_ratio=test_ratio)
+    print(f"Dataset size: {len(dataset)}")
+    loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    return loader
 
 def train(model, loader, optimizer, loss_fn, epochs):
-
     for epoch in range(epochs):
         model.train()
         epoch_loss = 0
-        epoch_correct = 0
-
         for batch in loader:
             optimizer.zero_grad()
-            # Forward pass
-            out = model(batch)  # Predicts regression values for all nodes
-            # Apply the train mask to select only the nodes used for training
-            loss = loss_fn(out[batch.train_mask].squeeze(), batch.y[batch.train_mask])
-            # Backward pass
+            out = model(batch)
+            loss = loss_fn(out[batch.train_mask], batch.y[batch.train_mask])
             loss.backward()
             optimizer.step()
-
             epoch_loss += loss.item()
-            pred = out[batch.train_mask].squeeze().round()
-            epoch_correct += pred.eq(batch.y[batch.train_mask]).sum().item()
-        
-        print(f'Epoch {epoch + 1}, Loss: {epoch_loss}, Accuracy: {epoch_correct / len(loader.dataset)}')
+        print(f'Epoch {epoch + 1}, Loss: {epoch_loss:.4f}')
 
 def test(model, loader, mask_type):
     model.eval()
     total_loss = 0
-    correct = 0
-    if mask_type == "Test":
-        mask = loader.dataset.test_mask
-    else:
-        mask = loader.dataset.train_mask
-
-    for batch in loader:
-        with torch.no_grad():
+    total_mse = 0
+    num_samples = 0
+    
+    with torch.no_grad():
+        for batch in loader:
             out = model(batch)
-            loss = F.mse_loss(out[mask].squeeze(), batch.y[mask])
-            total_loss += loss.item()
-
-            pred = out[mask].squeeze().round()
-            correct += pred.eq(batch.y[mask]).sum().item()
-
-    print(f'{mask_type} Loss: {total_loss}')
-    print(f'{mask_type} Accuracy: {correct / len(loader.dataset)}')
+            mask = batch.test_mask if mask_type == "Test" else batch.train_mask
+            loss = F.binary_cross_entropy(out[mask], batch.y[mask])
+            mse = F.mse_loss(out[mask], batch.y[mask])
+            total_loss += loss.item() * mask.sum().item()
+            total_mse += mse.item() * mask.sum().item()
+            num_samples += mask.sum().item()
+    
+    avg_loss = total_loss / num_samples
+    avg_mse = total_mse / num_samples
+    rmse = torch.sqrt(torch.tensor(avg_mse))
+    
+    print(f'{mask_type} Loss: {avg_loss:.4f}, RMSE: {rmse:.4f}')
 
 def main():
-    loader = get_dataloaders("code/puzzle_tree_dataset/", batch_size=4, test_ratio=0.2)
+    loader = get_dataloaders("code/dataset/sp_hmax_size_7_moves_8/", batch_size=32, test_ratio=0.2)
 
-    feature_dim = 10 # this is based on node_features in tree_to_graph
-    model = GCN(input_dim=feature_dim, hidden_dim=64, output_dim=1)
-    optimizer = Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
+    feature_dim = 10  # this is based on node_features in tree_to_graph
+    model = ImprovedGNN(input_dim=feature_dim, hidden_dim=64)
+    optimizer = Adam(model.parameters(), lr=0.001, weight_decay=5e-4)
     loss_fn = torch.nn.MSELoss()
-    epochs = 100
+    epochs = 300
 
     train(model, loader, optimizer, loss_fn, epochs)
     print("Finished Training")
 
     test(model, loader, "Train")
     test(model, loader, "Test")
-    
 
 if __name__ == "__main__":
     main()
