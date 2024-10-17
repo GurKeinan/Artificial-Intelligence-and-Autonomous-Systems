@@ -4,4 +4,3 @@
 *.gz
 .DS_Store
 __pycache__
-/code/dataset
