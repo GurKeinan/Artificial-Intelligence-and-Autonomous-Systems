@@ -123,7 +123,7 @@ SAMPLES = 1
 def main():
     for sample_idx in tqdm(range(SAMPLES)):
         initial_state, goal_state = generate_block_world_problem(NUM_BLOCKS, NUM_STACKS, NUM_MOVES)
-        solution, search_tree_root = a_star(initial_state, goal_state, height_difference)
+        solution, search_tree_root = a_star(initial_state, goal_state, h_max)
 
         #prints for debugging
         print(f"Initial state:\n{initial_state}")
