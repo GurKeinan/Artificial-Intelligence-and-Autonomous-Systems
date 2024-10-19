@@ -1,3 +1,6 @@
+from pathlib import Path
+from sklearn.metrics import mean_squared_error
+
 import torch
 import torch.nn.functional as F
 from torch_geometric.loader import DataLoader
@@ -90,16 +93,22 @@ def test(model, loader, mask_type):
             num_samples += mask.sum().item()
     
     avg_loss = total_loss / num_samples
-    avg_mse = total_mse / num_samples
-    rmse = torch.sqrt(torch.tensor(avg_mse))
+    rmse = mean_squared_error(batch.y[mask].cpu().numpy(), out[mask].cpu().numpy(), squared=False)
     
-    print(f'{mask_type} Loss: {avg_loss:.4f}, RMSE: {rmse:.4f}')
+    print(f'{mask_type} Avg. Loss: {avg_loss:.4f}, RMSE: {rmse:.4f}')
 
 def main():
-    loader = get_dataloaders("code/dataset/sp_hmax_size_7_moves_8/", batch_size=32, test_ratio=0.2)
+
+    ### Load data
+    base_dir = Path(__file__).resolve().parent
+    if base_dir.name != "code":
+        base_dir = base_dir / "code"
+    data_dir = base_dir / "dataset"
+
+    loader = get_dataloaders(root_dir=data_dir, batch_size=32, test_ratio=0.2)
 
     feature_dim = 10  # this is based on node_features in tree_to_graph
-    model = ImprovedGNN(input_dim=feature_dim, hidden_dim=64)
+    model = ImprovedGNN(input_dim=feature_dim, hidden_dim=128, num_layers=6, heads=6, dropout=0.2)
     optimizer = Adam(model.parameters(), lr=0.001, weight_decay=5e-4)
     loss_fn = torch.nn.MSELoss()
     epochs = 300
