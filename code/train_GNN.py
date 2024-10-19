@@ -80,22 +80,41 @@ def test(model, loader, mask_type):
     model.eval()
     total_loss = 0
     total_mse = 0
+    total_sse = 0
     num_samples = 0
+    num_trees = 0
+
+    preds = []
+    targets = []
     
     with torch.no_grad():
         for batch in loader:
             out = model(batch)
-            mask = batch.test_mask if mask_type == "Test" else batch.train_mask
+
+            if mask_type == "Full":
+                mask = batch.test_mask | batch.train_mask
+            elif mask_type == "Train":
+                mask = batch.train_mask
+            else:
+                mask = batch.test_mask
+
             loss = F.binary_cross_entropy(out[mask], batch.y[mask])
             mse = F.mse_loss(out[mask], batch.y[mask])
+            sse = (out[mask] - batch.y[mask]).pow(2).sum()
+
             total_loss += loss.item() * mask.sum().item()
-            total_mse += mse.item() * mask.sum().item()
+            total_mse += mse.item()
+            total_sse += sse.item()
             num_samples += mask.sum().item()
-    
+            num_trees += batch.num_graphs
+
     avg_loss = total_loss / num_samples
-    rmse = mean_squared_error(batch.y[mask].cpu().numpy(), out[mask].cpu().numpy(), squared=False)
+    # rmse = (total_mse ** 0.5) / num_trees
+
+    mse = total_sse / num_samples
+    # rmse = (score ** 0.5) / num_trees
     
-    print(f'{mask_type} Avg. Loss: {avg_loss:.4f}, RMSE: {rmse:.4f}')
+    print(f'{mask_type} Avg. Loss: {avg_loss:.4f}, MSE: {mse:.4f}')
 
 def main():
 
@@ -118,6 +137,7 @@ def main():
 
     test(model, loader, "Train")
     test(model, loader, "Test")
+    test(model, loader, "Full")
 
 if __name__ == "__main__":
     main()

@@ -27,8 +27,20 @@ def load_data(root_dir):
 
     return data_list, name_list
 
+def compute_score(nodes, targets, print_res):
+    nodes = np.array(nodes)
+    targets = np.array(targets)
 
-def vesp_benchmark(root, print_rmse=False):
+    # rmse = mean_squared_error(targets, nodes, squared=False)
+    # mse = sum((nodes - targets) ** 2) / len(targets)
+    sse = sum((nodes - targets) ** 2)
+
+    if print_res:
+        print(f"RMSE: {sse}")
+    return sse
+
+
+def vesp_benchmark(root, print_res=False):
     nodes = []
     targets = []
 
@@ -58,14 +70,11 @@ def vesp_benchmark(root, print_rmse=False):
     # Start traversal from the root
     traverse(root)
 
-    rmse = mean_squared_error(targets, nodes, squared=False)
-    if print_rmse:
-        print(f"RMSE: {rmse}")
-    
-    return nodes, targets, rmse
+    res = compute_score(nodes, targets, print_res)
+    return nodes, targets, res
 
 
-def vasp_benchmark(root, window_size=10, print_rmse=False):
+def vasp_benchmark(root, window_size=50, print_res=False):
     e_vals = []
     nodes = []
     targets = []
@@ -97,14 +106,11 @@ def vasp_benchmark(root, window_size=10, print_rmse=False):
     # Start traversal from the root
     traverse(root)
 
-    rmse = mean_squared_error(targets, nodes, squared=False)
-    if print_rmse:
-        print(f"RMSE: {rmse}")
-    
-    return nodes, targets, rmse
+    res = compute_score(nodes, targets, print_res)
+    return nodes, targets, res
 
 
-def pbp_benchmark(root, print_rmse=False):
+def pbp_benchmark(root, print_res=False):
     nodes = []
     targets = []
 
@@ -127,14 +133,11 @@ def pbp_benchmark(root, print_rmse=False):
     # Start traversal from the root
     traverse(root)
 
-    rmse = mean_squared_error(targets, nodes, squared=False)
-    if print_rmse:
-        print(f"RMSE: {rmse}")
-
-    return nodes, targets, rmse
+    res = compute_score(nodes, targets, print_res)
+    return nodes, targets, res
 
 
-def random_forest_benchmark(root, print_rmse=False):
+def random_forest_benchmark(root, print_res=False):
     nodes = []
     targets = []
 
@@ -163,17 +166,26 @@ def random_forest_benchmark(root, print_rmse=False):
     traverse(root)
 
     # Random Forest Regression:
+    if len(nodes) < 2:
+        train_X, train_y = nodes, targets
+    else:
+        train_X, test_X, train_y, test_y = train_test_split(nodes, targets, test_size=0.2, random_state=42)
     regr = RandomForestRegressor(n_estimators=50, max_depth=3, random_state=42) 
-    regr.fit(nodes, targets)
+    regr.fit(train_X, train_y)
+
+    # predict on test set:
+    # if len(nodes) < 2:
+    #     y_pred_test = y_pred_full
+    #     rmse_test = rmse_full
+    # else:
+    #     y_pred_test = regr.predict(test_X)
+    #     rmse_test = mean_squared_error(test_y, y_pred_test, squared=False)
 
     # Predict on all nodes:
     y_pred_full = regr.predict(nodes)
-    rmse_full = mean_squared_error(targets, y_pred_full, squared=False)
 
-    if print_rmse:
-        print(f"RMSE: {rmse_full}")
-
-    return y_pred_full, targets, rmse_full
+    res = compute_score(y_pred_full, targets, print_res)
+    return y_pred_full, targets, res
 
 
 def main():
@@ -190,14 +202,18 @@ def main():
     ### Benchmarks
     benchmark_models = [vesp_benchmark, vasp_benchmark, pbp_benchmark, random_forest_benchmark]
 
+    total_samples = 0
     for benchmark_model in benchmark_models:
         results = []
         for tree, name in zip(data, names):
-            nodes, targets, rmse = benchmark_model(tree)
-            results.append((nodes, targets, rmse))
-
+            nodes, targets, sse = benchmark_model(tree, print_res=False)
+            results.append((nodes, targets, sse))
+            total_samples += len(nodes)
+        
         # Calculate average RMSE
-        print(f"Average RMSE for {benchmark_model}: {sum([r[2] for r in results]) / len(results)}")
+        # rmse = (sum([r[2] for r in results]) / len(results)) ** 0.5
+        mse = sum([r[2] for r in results]) / total_samples
+        print(f"MSE for {benchmark_model.__name__}: {mse}")
 
 
 if __name__ == "__main__":
