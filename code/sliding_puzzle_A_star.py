@@ -1,6 +1,7 @@
 from typing import List, Tuple, Optional, Callable, Dict
 import heapq
 import os
+from pathlib import Path
 import pickle
 
 from tqdm import tqdm
@@ -35,6 +36,11 @@ def a_star(initial_state: SlidingPuzzleState,
     
     root_h = heuristic(initial_state, goal_state)
     root = SearchNode(initial_state, 0, 0, root_h, root_h)
+    root.min_h_seen = root_h
+    root.max_f_seen = root.f
+    root.nodes_since_min_h = 0
+    root.nodes_since_max_f = 0
+    
     open_set = []
     closed_set = set()
     node_dict: Dict[SlidingPuzzleState, SearchNode] = {initial_state: root}
@@ -53,23 +59,6 @@ def a_star(initial_state: SlidingPuzzleState,
         if current_node.state in closed_set:
             continue  # Skip this node if it's a duplicate
 
-        if current_node.h < global_min_h:
-            global_min_h = current_node.h
-            nodes_since_global_min_h = 0
-        else:
-            nodes_since_global_min_h += 1
-
-        if current_node.f > global_max_f:
-            global_max_f = current_node.f
-            nodes_since_global_max_f = 0
-        else:
-            nodes_since_global_max_f += 1
-
-        current_node.min_h_seen = global_min_h
-        current_node.nodes_since_min_h = nodes_since_global_min_h
-        current_node.max_f_seen = global_max_f
-        current_node.nodes_since_max_f = nodes_since_global_max_f
-
         if current_node.state == goal_state:
             return reconstruct_path(current_node), root
 
@@ -82,10 +71,36 @@ def a_star(initial_state: SlidingPuzzleState,
 
             neighbor_g = current_node.g + 1
             neighbor_h = heuristic(neighbor_state, goal_state)
+            neighbor_f = neighbor_g + neighbor_h
 
             if neighbor_state not in node_dict or neighbor_g < node_dict[neighbor_state].g:
+                # ** Update counters here: **
                 serial_number += 1
+                nodes_since_global_min_h += 1
+                nodes_since_global_max_f += 1
+
+                # ** Create new node: **
                 neighbor_node = SearchNode(neighbor_state, serial_number, neighbor_g, neighbor_h, root_h, current_node, action)
+
+                # ** Update global if this new node has a smaller h or larger f: **
+                if neighbor_h < global_min_h:
+                    global_min_h = neighbor_h
+                    nodes_since_global_min_h = 0 
+                # else:
+                #     nodes_since_global_min_h += 1
+                
+                if neighbor_f > global_max_f:
+                    global_max_f = neighbor_f
+                    nodes_since_global_max_f = 0
+                # else:
+                #     nodes_since_global_max_f += 1
+
+                # ** Set values for the new node to the current global: **
+                neighbor_node.min_h_seen = global_min_h
+                neighbor_node.max_f_seen = global_max_f
+                neighbor_node.nodes_since_min_h = nodes_since_global_min_h
+                neighbor_node.nodes_since_max_f = nodes_since_global_max_f
+
                 node_dict[neighbor_state] = neighbor_node
                 current_node.children.append(neighbor_node)
                 current_node.child_count += 1
@@ -115,6 +130,21 @@ def print_search_tree(node: SearchNode, depth: int = 0):
     for child in node.children:
         print_search_tree(child, depth + 1)
 
+def print_nodes_by_serial_order(node: SearchNode):
+    all_nodes = []
+    def traverse(node):
+        all_nodes.append(node)
+        for child in node.children:
+            traverse(child)
+
+    traverse(node)
+    all_nodes.sort(key=lambda n: n.serial_number)
+
+    for node in all_nodes:
+        print(f"Serial: {node.serial_number}, Parent Serial: {node.parent.serial_number if node.parent else None}, g: {node.g}, h: {node.h}, f: {node.f}, child_count: {node.child_count}, h_0: {node.h_0}, min_h_seen: {node.min_h_seen}, nodes_since_min_h: {node.nodes_since_min_h}, max_f_seen: {node.max_f_seen}, nodes_since_max_f: {node.nodes_since_max_f}\n")
+        print(node.state)
+        print("\n")
+
 
 def calculate_progress(root: SearchNode):
     """Calculate the progress of each node in the search tree.
@@ -134,11 +164,16 @@ def calculate_progress(root: SearchNode):
 
     update_progress(root)
 
-SIZE = 7
-NUM_MOVES = 8
+SIZE = 10
+NUM_MOVES = 10
 SAMPLES = 100
 
 def main():
+
+    base_dir = Path(__file__).resolve().parent
+    if base_dir.name != "code":
+        base_dir = base_dir / "code"
+
 
     for sample_idx in tqdm(range(SAMPLES)):
 
@@ -148,12 +183,30 @@ def main():
         # Calculate progress for each node
         calculate_progress(search_tree_root)
 
-        # print_search_tree(search_tree_root)
-        
-        if not os.path.exists(f"dataset/sp_hmax_size_{SIZE}_moves_{NUM_MOVES}"):
-            os.makedirs(f"dataset/sp_hmax_size_{SIZE}_moves_{NUM_MOVES}")
+        ### Debug print the search tree: ###
+        # print("\nInitial State:")
+        # print(initial_state)
+        # print("\nGoal State:")
+        # print(goal_state)
 
-        with open(f"dataset/sp_hmax_size_{SIZE}_moves_{NUM_MOVES}/sample_{sample_idx}.pkl", "wb") as f:
+        # if solution:
+        #     print(f"\nSolution found in {len(solution)} moves:")
+        #     print(" -> ".join(solution))
+        # else:
+        #     print("\nNo solution found.")
+
+        # print("\nSearch Tree:\n")
+        # print_search_tree(search_tree_root)
+
+        # print("\nNodes by serial order:\n")
+        # print_nodes_by_serial_order(search_tree_root)
+
+        
+        ### Save the search tree: ###
+        if not os.path.exists(f"{base_dir}/dataset/sp_hmax_size_{SIZE}_moves_{NUM_MOVES}"):
+            os.makedirs(f"{base_dir}/dataset/sp_hmax_size_{SIZE}_moves_{NUM_MOVES}")
+
+        with open(f"{base_dir}/dataset/sp_hmax_size_{SIZE}_moves_{NUM_MOVES}/sample_{sample_idx}.pkl", "wb") as f:
             pickle.dump(search_tree_root, f)
 
 

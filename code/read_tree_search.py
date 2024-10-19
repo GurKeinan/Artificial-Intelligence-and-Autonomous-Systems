@@ -1,5 +1,6 @@
 import pickle
 import os
+from pathlib import Path
 import random
 
 import torch
@@ -16,16 +17,34 @@ class TreeDataset(InMemoryDataset):
         self.test_ratio = test_ratio
         self.data, self.slices = self.load_data()
 
+    # def load_data(self):
+    #     data_list = []
+    #     # Iterate through the pickle files
+    #     for file_name in os.listdir(self.root_dir):
+    #         if file_name.endswith('.pkl'):
+    #             with open(os.path.join(self.root_dir, file_name), 'rb') as f:
+    #                 tree = pickle.load(f)
+    #                 graph_data = tree_to_graph(tree, self.test_ratio)
+    #                 data_list.append(graph_data)
+    #     return self.collate(data_list)  # Collate into InMemoryDataset format
+    
     def load_data(self):
         data_list = []
-        # Iterate through the pickle files
-        for file_name in os.listdir(self.root_dir):
-            if file_name.endswith('.pkl'):
-                with open(os.path.join(self.root_dir, file_name), 'rb') as f:
-                    tree = pickle.load(f)
-                    graph_data = tree_to_graph(tree, self.test_ratio)
-                    data_list.append(graph_data)
-        return self.collate(data_list)  # Collate into InMemoryDataset format
+        name_list = []
+        root_path = Path(self.root_dir) # all folders in the root directory
+
+        datasets = '\n'.join([str(p.as_posix()) for p in root_path.iterdir() if p.name != '.DS_Store'])
+        print(f"Read Datasets:\n{datasets}")
+
+        for pkl_file in root_path.rglob('*.pkl'):
+            with pkl_file.open('rb') as f:
+                tree = pickle.load(f)
+                name_list.append(root_path / pkl_file)
+
+                graph_data = tree_to_graph(tree, self.test_ratio)
+                data_list.append(graph_data)
+
+        return self.collate(data_list)
 
 
 def tree_to_graph(root, test_ratio=0):
