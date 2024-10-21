@@ -32,7 +32,7 @@ def a_star(initial_state: BlockWorldState,
            goal_state: BlockWorldState,
            heuristic: Callable[[BlockWorldState, BlockWorldState], int]) -> Tuple[
     Optional[List[Tuple[int, int]]], SearchNode]:
-    
+
     root_h = heuristic(initial_state, goal_state)
     root = SearchNode(initial_state, 0, 0, root_h, root_h)
     open_set = []
@@ -115,38 +115,42 @@ def calculate_progress(root: SearchNode):
 
     update_progress(root)
 
-NUM_BLOCKS = 5
-NUM_STACKS = 3
-NUM_MOVES = 10
-SAMPLES = 1
+NUM_BLOCKS_LIST = [5, 10, 15, 20]
+NUM_STACKS_LIST = [3, 5, 7]
+NUM_MOVES_LIST = [5, 10, 15, 20]
+SAMPLES = 1000
 
 def main():
-    for sample_idx in tqdm(range(SAMPLES)):
-        initial_state, goal_state = generate_block_world_problem(NUM_BLOCKS, NUM_STACKS, NUM_MOVES)
-        solution, search_tree_root = a_star(initial_state, goal_state, h_max)
+    for NUM_BLOCKS in NUM_BLOCKS_LIST:
+        for NUM_STACKS in NUM_STACKS_LIST:
+            for NUM_MOVES in NUM_MOVES_LIST:
+                print(f"Generating samples for {NUM_BLOCKS} blocks, {NUM_STACKS} stacks, {NUM_MOVES} moves")
+                for sample_idx in tqdm(range(SAMPLES)):
+                    initial_state, goal_state = generate_block_world_problem(NUM_BLOCKS, NUM_STACKS, NUM_MOVES)
+                    solution, search_tree_root = a_star(initial_state, goal_state, misplaced_blocks)
 
-        #prints for debugging
-        print(f"Initial state:\n{initial_state}")
-        print(f"Goal state:\n{goal_state}")
-        print(f"Solution: {solution}")
+                    #prints for debugging
+                    # print(f"Initial state:\n{initial_state}")
+                    # print(f"Goal state:\n{goal_state}")
+                    # print(f"Solution: {solution}")
 
-        # Calculate progress for each node
-        calculate_progress(search_tree_root)
-        
-        # Create directory if it doesn't exist
-        output_dir = f"dataset/bw_hmax_blocks_{NUM_BLOCKS}_stacks_{NUM_STACKS}_moves_{NUM_MOVES}"
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+                    # Calculate progress for each node
+                    calculate_progress(search_tree_root)
 
-        # Save the search tree
-        with open(f"{output_dir}/sample_{sample_idx}.pkl", "wb") as f:
-            pickle.dump(search_tree_root, f)
+                    # Create directory if it doesn't exist
+                    output_dir = f"dataset/bw_hmax_blocks_{NUM_BLOCKS}_stacks_{NUM_STACKS}_moves_{NUM_MOVES}"
+                    if not os.path.exists(output_dir):
+                        os.makedirs(output_dir)
 
-        # Optional: Print some information about the solution
-        if solution:
-            print(f"Sample {sample_idx}: Solution found with {len(solution)} moves")
-        else:
-            print(f"Sample {sample_idx}: No solution found")
+                    # Save the search tree
+                    with open(f"{output_dir}/sample_{sample_idx}.pkl", "wb") as f:
+                        pickle.dump(search_tree_root, f)
+
+                    # Optional: Print some information about the solution
+                    # if solution:
+                    #     print(f"Sample {sample_idx}: Solution found with {len(solution)} moves")
+                    # else:
+                    #     print(f"Sample {sample_idx}: No solution found")
 
 if __name__ == "__main__":
     main()

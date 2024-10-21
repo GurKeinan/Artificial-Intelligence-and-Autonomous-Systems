@@ -33,14 +33,14 @@ def a_star(initial_state: SlidingPuzzleState,
            goal_state: SlidingPuzzleState,
            heuristic: Callable[[SlidingPuzzleState, SlidingPuzzleState], int]) -> Tuple[
     Optional[List[str]], SearchNode]:
-    
+
     root_h = heuristic(initial_state, goal_state)
     root = SearchNode(initial_state, 0, 0, root_h, root_h)
     root.min_h_seen = root_h
     root.max_f_seen = root.f
     root.nodes_since_min_h = 0
     root.nodes_since_max_f = 0
-    
+
     open_set = []
     closed_set = set()
     node_dict: Dict[SlidingPuzzleState, SearchNode] = {initial_state: root}
@@ -85,10 +85,10 @@ def a_star(initial_state: SlidingPuzzleState,
                 # ** Update global if this new node has a smaller h or larger f: **
                 if neighbor_h < global_min_h:
                     global_min_h = neighbor_h
-                    nodes_since_global_min_h = 0 
+                    nodes_since_global_min_h = 0
                 # else:
                 #     nodes_since_global_min_h += 1
-                
+
                 if neighbor_f > global_max_f:
                     global_max_f = neighbor_f
                     nodes_since_global_max_f = 0
@@ -164,9 +164,9 @@ def calculate_progress(root: SearchNode):
 
     update_progress(root)
 
-SIZE = 10
-NUM_MOVES = 10
-SAMPLES = 100
+SIZE_LIST = [3, 5, 7, 9]
+NUM_MOVES_LIST = [5, 10, 15, 20]
+SAMPLES = 1000
 
 def main():
 
@@ -174,40 +174,43 @@ def main():
     if base_dir.name != "code":
         base_dir = base_dir / "code"
 
+    for SIZE in SIZE_LIST:
+        for NUM_MOVES in NUM_MOVES_LIST:
+            print(f"Generating search trees for size {SIZE} and {NUM_MOVES} moves...")
 
-    for sample_idx in tqdm(range(SAMPLES)):
+            for sample_idx in tqdm(range(SAMPLES)):
 
-        initial_state, goal_state = generate_sliding_puzzle_problem(SIZE, NUM_MOVES)
-        solution, search_tree_root = a_star(initial_state, goal_state, h_max)
+                initial_state, goal_state = generate_sliding_puzzle_problem(SIZE, NUM_MOVES)
+                solution, search_tree_root = a_star(initial_state, goal_state, misplaced_tiles)
 
-        # Calculate progress for each node
-        calculate_progress(search_tree_root)
+                # Calculate progress for each node
+                calculate_progress(search_tree_root)
 
-        ### Debug print the search tree: ###
-        # print("\nInitial State:")
-        # print(initial_state)
-        # print("\nGoal State:")
-        # print(goal_state)
+                ### Debug print the search tree: ###
+                # print("\nInitial State:")
+                # print(initial_state)
+                # print("\nGoal State:")
+                # print(goal_state)
 
-        # if solution:
-        #     print(f"\nSolution found in {len(solution)} moves:")
-        #     print(" -> ".join(solution))
-        # else:
-        #     print("\nNo solution found.")
+                # if solution:
+                #     print(f"\nSolution found in {len(solution)} moves:")
+                #     print(" -> ".join(solution))
+                # else:
+                #     print("\nNo solution found.")
 
-        # print("\nSearch Tree:\n")
-        # print_search_tree(search_tree_root)
+                # print("\nSearch Tree:\n")
+                # print_search_tree(search_tree_root)
 
-        # print("\nNodes by serial order:\n")
-        # print_nodes_by_serial_order(search_tree_root)
+                # print("\nNodes by serial order:\n")
+                # print_nodes_by_serial_order(search_tree_root)
 
-        
-        ### Save the search tree: ###
-        if not os.path.exists(f"{base_dir}/dataset/sp_hmax_size_{SIZE}_moves_{NUM_MOVES}"):
-            os.makedirs(f"{base_dir}/dataset/sp_hmax_size_{SIZE}_moves_{NUM_MOVES}")
 
-        with open(f"{base_dir}/dataset/sp_hmax_size_{SIZE}_moves_{NUM_MOVES}/sample_{sample_idx}.pkl", "wb") as f:
-            pickle.dump(search_tree_root, f)
+                ### Save the search tree: ###
+                if not os.path.exists(f"{base_dir}/dataset/sp_hmax_size_{SIZE}_moves_{NUM_MOVES}"):
+                    os.makedirs(f"{base_dir}/dataset/sp_hmax_size_{SIZE}_moves_{NUM_MOVES}")
+
+                with open(f"{base_dir}/dataset/sp_hmax_size_{SIZE}_moves_{NUM_MOVES}/sample_{sample_idx}.pkl", "wb") as f:
+                    pickle.dump(search_tree_root, f)
 
 
 if __name__ == "__main__":

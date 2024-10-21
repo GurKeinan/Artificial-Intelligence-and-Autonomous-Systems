@@ -11,50 +11,40 @@ from torch_geometric.nn import global_mean_pool
 from read_tree_search import TreeDataset
 from sliding_puzzle_A_star import SearchNode
 
-class ImprovedGNN(torch.nn.Module):
-    def __init__(self, input_dim, hidden_dim, num_layers=4, heads=4, dropout=0.2):
-        super(ImprovedGNN, self).__init__()
+class QuickResidualGNN(torch.nn.Module):
+    def __init__(self, input_dim, hidden_dim, num_layers=3, dropout=0.2):
+        super(QuickResidualGNN, self).__init__()
         self.num_layers = num_layers
-        self.convs = torch.nn.ModuleList()
-        self.layer_norms = torch.nn.ModuleList()
-        
+        self.dropout = dropout
+
         # Input projection
         self.input_proj = torch.nn.Linear(input_dim, hidden_dim)
-        
-        # Input layer
-        self.convs.append(GATConv(hidden_dim, hidden_dim, heads=heads, concat=False))
-        self.layer_norms.append(torch.nn.LayerNorm(hidden_dim))
-        
-        # Hidden layers
-        for _ in range(num_layers - 2):
-            self.convs.append(GATConv(hidden_dim, hidden_dim, heads=heads, concat=False))
-            self.layer_norms.append(torch.nn.LayerNorm(hidden_dim))
-        
+
+        # Graph Convolutional layers
+        self.convs = torch.nn.ModuleList()
+        for _ in range(num_layers):
+            self.convs.append(GCNConv(hidden_dim, hidden_dim))
+
         # Output layer
-        self.convs.append(GCNConv(hidden_dim, 1))
-        
-        self.dropout = dropout
+        self.output = GCNConv(hidden_dim, 1)
 
     def forward(self, data):
         x, edge_index, batch = data.x, data.edge_index, data.batch
-        
+
         # Project input to hidden dimension
         x = self.input_proj(x)
-        
-        for i in range(self.num_layers - 1):
-            identity = x
-            x = self.convs[i](x, edge_index)
-            x = self.layer_norms[i](x)
+
+        # Graph Convolutional layers with residual connections
+        for conv in self.convs:
+            residual = x
+            x = conv(x, edge_index)
             x = F.relu(x)
             x = F.dropout(x, p=self.dropout, training=self.training)
-            
-            # Residual connection
-            x = x + identity
-        
+            x = x + residual  # Residual connection
+
         # Output layer
-        x = self.convs[-1](x, edge_index)
-        
-        # No need for global pooling, we want node-level predictions
+        x = self.output(x, edge_index)
+
         return torch.sigmoid(x).view(-1)
 
 def get_dataloaders(root_dir, batch_size=32, test_ratio=0.2):
@@ -86,7 +76,7 @@ def test(model, loader, mask_type):
 
     preds = []
     targets = []
-    
+
     with torch.no_grad():
         for batch in loader:
             out = model(batch)
@@ -113,7 +103,7 @@ def test(model, loader, mask_type):
 
     mse = total_sse / num_samples
     # rmse = (score ** 0.5) / num_trees
-    
+
     print(f'{mask_type} Avg. Loss: {avg_loss:.4f}, MSE: {mse:.4f}')
 
 def main():
@@ -127,10 +117,10 @@ def main():
     loader = get_dataloaders(root_dir=data_dir, batch_size=32, test_ratio=0.2)
 
     feature_dim = 10  # this is based on node_features in tree_to_graph
-    model = ImprovedGNN(input_dim=feature_dim, hidden_dim=128, num_layers=6, heads=6, dropout=0.2)
+    model = QuickResidualGNN(input_dim=feature_dim, hidden_dim=64, num_layers=3, dropout=0.2)
     optimizer = Adam(model.parameters(), lr=0.001, weight_decay=5e-4)
     loss_fn = torch.nn.MSELoss()
-    epochs = 300
+    epochs = 200
 
     train(model, loader, optimizer, loss_fn, epochs)
     print("Finished Training")
