@@ -153,14 +153,14 @@ def random_forest_benchmark(root, print_res=False):
     res = compute_score(y_pred_full, targets, print_res)
     return y_pred_full, targets, res, regr
 
-def plot_feature_importances(model, feature_names):
-    importances = model.feature_importances_
-    indices = np.argsort(importances)[::-1]
+def plot_feature_importance(model, feature_names):
+    importance = model.feature_importance_
+    indices = np.argsort(importance)[::-1]
 
     plt.figure(figsize=(10, 6))
-    plt.title("Feature Importances in Random Forest Model")
-    plt.bar(range(len(importances)), importances[indices])
-    plt.xticks(range(len(importances)), [feature_names[i] for i in indices], rotation=90)
+    plt.title("Feature Importance in Random Forest Model")
+    plt.bar(range(len(importance)), importance[indices])
+    plt.xticks(range(len(importance)), [feature_names[i] for i in indices], rotation=90)
     plt.tight_layout()
     plt.show()
 
@@ -197,7 +197,7 @@ def main():
             'h_0', 'min_h_seen', 'nodes_since_min_h',
             'max_f_seen', 'nodes_since_max_f'
         ]
-        plot_feature_importances(rf_model, feature_names)
+        plot_feature_importance(rf_model, feature_names)
 
 if __name__ == "__main__":
     main()

@@ -74,6 +74,7 @@ def generate_sliding_puzzle_problem(size: int, num_moves: int) -> Tuple[SlidingP
         if previous_action:
             actions.remove({"UP": "DOWN", "DOWN": "UP", "LEFT": "RIGHT", "RIGHT": "LEFT"}[previous_action]) # Prevent moving back
         action = random.choice(actions)
+        previous_action = action
         initial_state = initial_state.apply_action(action)
 
     return initial_state, goal_state
