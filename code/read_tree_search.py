@@ -2,12 +2,13 @@ import pickle
 import os
 from pathlib import Path
 import random
+from tqdm import tqdm
 
 import torch
 from torch_geometric.data import InMemoryDataset, Data
 from torch_geometric.loader import DataLoader
 
-from sliding_puzzle_A_star import SearchNode
+from general_state import StateInterface, SearchNode
 
 class TreeDataset(InMemoryDataset):
     def __init__(self, root_dir, test_ratio=0, transform=None, pre_transform=None):
@@ -36,7 +37,7 @@ class TreeDataset(InMemoryDataset):
         datasets = '\n'.join([str(p.as_posix()) for p in root_path.iterdir() if p.name != '.DS_Store'])
         print(f"Read Datasets:\n{datasets}")
 
-        for pkl_file in root_path.rglob('*.pkl'):
+        for pkl_file in tqdm(root_path.rglob('*.pkl')):
             with pkl_file.open('rb') as f:
                 tree = pickle.load(f)
                 name_list.append(root_path / pkl_file)
@@ -108,7 +109,7 @@ def tree_to_graph(root, test_ratio=0):
 
 
 def main():
-    data_path = "code/puzzle_tree_dataset/"
+    data_path = "code/dataset/"
 
     # Load the dataset:
     dataset = TreeDataset(root_dir=data_path, test_ratio=0.2)

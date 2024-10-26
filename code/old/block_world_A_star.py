@@ -5,7 +5,7 @@ import pickle
 from tqdm import tqdm
 
 from block_world_generator import BlockWorldState, generate_block_world_problem
-from block_world_heuristics import misplaced_blocks, height_difference, h_max
+from block_world_heuristics import bw_misplaced_blocks, bw_height_difference, bw_h_max
 
 class SearchNode:
     def __init__(self, state: BlockWorldState, serial_number: int, g: int, h: int, h_0: int, parent: Optional['SearchNode'] = None,
@@ -127,7 +127,8 @@ def main():
                 print(f"Generating samples for {NUM_BLOCKS} blocks, {NUM_STACKS} stacks, {NUM_MOVES} moves")
                 for sample_idx in tqdm(range(SAMPLES)):
                     initial_state, goal_state = generate_block_world_problem(NUM_BLOCKS, NUM_STACKS, NUM_MOVES)
-                    solution, search_tree_root = a_star(initial_state, goal_state, misplaced_blocks)
+                    solution, search_tree_root = a_star(
+                        initial_state, goal_state, bw_misplaced_blocks)
 
                     #prints for debugging
                     # print(f"Initial state:\n{initial_state}")

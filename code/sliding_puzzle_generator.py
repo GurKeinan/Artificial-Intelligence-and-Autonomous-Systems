@@ -1,7 +1,10 @@
 import random
 from typing import List, Tuple, Optional
 
-class SlidingPuzzleState:
+from general_state import StateInterface
+
+
+class SlidingPuzzleState(StateInterface):
     def __init__(self, size: int, board: Optional[List[List[int]]] = None):
         self.size = size
         if board:
@@ -67,15 +70,19 @@ class SlidingPuzzleState:
 def generate_sliding_puzzle_problem(size: int, num_moves: int) -> Tuple[SlidingPuzzleState, SlidingPuzzleState]:
     goal_state = SlidingPuzzleState(size, [[(i * size + j + 1) % (size ** 2) for j in range(size)] for i in range(size)])
     initial_state = goal_state
-    previous_action = None
+    visited_states = set()
 
     for _ in range(num_moves):
         actions = initial_state.get_possible_actions()
-        if previous_action:
-            actions.remove({"UP": "DOWN", "DOWN": "UP", "LEFT": "RIGHT", "RIGHT": "LEFT"}[previous_action]) # Prevent moving back
         action = random.choice(actions)
-        previous_action = action
-        initial_state = initial_state.apply_action(action)
+        new_state = initial_state.apply_action(action)
+        
+        while new_state in visited_states:
+            action = random.choice(actions)
+            new_state = initial_state.apply_action(action)
+
+        visited_states.add(new_state)
+        initial_state = new_state
 
     return initial_state, goal_state
 

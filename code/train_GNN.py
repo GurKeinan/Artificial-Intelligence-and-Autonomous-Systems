@@ -9,7 +9,7 @@ from torch_geometric.nn import GCNConv, GATConv
 from torch_geometric.nn import global_mean_pool
 
 from read_tree_search import TreeDataset
-from sliding_puzzle_A_star import SearchNode
+from general_state import SearchNode
 
 class QuickResidualGNN(torch.nn.Module):
     def __init__(self, input_dim, hidden_dim, num_layers=3, dropout=0.2):
@@ -30,6 +30,10 @@ class QuickResidualGNN(torch.nn.Module):
 
     def forward(self, data):
         x, edge_index, batch = data.x, data.edge_index, data.batch
+
+        # NOTE
+        # Make the graph bidirectional by adding reversed edges
+        edge_index = torch.cat([edge_index, edge_index.flip(0)], dim=1)
 
         # Project input to hidden dimension
         x = self.input_proj(x)
@@ -114,14 +118,15 @@ def main():
         base_dir = base_dir / "code"
     data_dir = base_dir / "dataset"
 
-    loader = get_dataloaders(root_dir=data_dir, batch_size=32, test_ratio=0.2)
+    loader = get_dataloaders(root_dir=data_dir, batch_size=64, test_ratio=0.2)
 
     feature_dim = 10  # this is based on node_features in tree_to_graph
-    model = QuickResidualGNN(input_dim=feature_dim, hidden_dim=64, num_layers=3, dropout=0.2)
+    model = QuickResidualGNN(input_dim=feature_dim, hidden_dim=128, num_layers=3, dropout=0.2)
     optimizer = Adam(model.parameters(), lr=0.001, weight_decay=5e-4)
     loss_fn = torch.nn.MSELoss()
-    epochs = 200
+    epochs = 500
 
+    print("Starting Training")
     train(model, loader, optimizer, loss_fn, epochs)
     print("Finished Training")
 

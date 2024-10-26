@@ -3,36 +3,21 @@ import heapq
 import os
 from pathlib import Path
 import pickle
-
 from tqdm import tqdm
+
+from general_state import StateInterface, SearchNode
+
 from sliding_puzzle_generator import SlidingPuzzleState, generate_sliding_puzzle_problem
-from sliding_puzzle_heuristics import manhattan_distance, misplaced_tiles, h_max
+from block_world_generator import BlockWorldState, generate_block_world_problem
 
-class SearchNode:
-    def __init__(self, state: SlidingPuzzleState, serial_number: int, g: int, h: int, h_0: int, parent: Optional['SearchNode'] = None,
-                 action: Optional[str] = None):
-        self.state = state
-        self.g = g
-        self.h = h
-        self.h_0 = h_0
-        self.f = g + h
-        self.parent = parent
-        self.action = action
-        self.children: List['SearchNode'] = []
-        self.serial_number: int = serial_number
-        self.child_count: int = 0
-        self.min_h_seen: int = h
-        self.nodes_since_min_h: int = 0
-        self.max_f_seen: int = self.f
-        self.nodes_since_max_f: int = 0
+from sliding_puzzle_heuristics import sp_manhattan_distance, sp_misplaced_tiles, sp_h_max
+from block_world_heuristics import bw_misplaced_blocks, bw_height_difference, bw_h_max
 
-    def __lt__(self, other: 'SearchNode') -> bool:
-        return self.f < other.f
 
-def a_star(initial_state: SlidingPuzzleState,
-           goal_state: SlidingPuzzleState,
-           heuristic: Callable[[SlidingPuzzleState, SlidingPuzzleState], int]) -> Tuple[
-    Optional[List[str]], SearchNode]:
+def a_star(initial_state: StateInterface,
+           goal_state: StateInterface,
+           heuristic: Callable[[StateInterface, StateInterface], int]) -> Tuple[
+        Optional[List[str]], SearchNode]:
 
     root_h = heuristic(initial_state, goal_state)
     root = SearchNode(initial_state, 0, 0, root_h, root_h)
@@ -43,7 +28,7 @@ def a_star(initial_state: SlidingPuzzleState,
 
     open_set = []
     closed_set = set()
-    node_dict: Dict[SlidingPuzzleState, SearchNode] = {initial_state: root}
+    node_dict: Dict[StateInterface, SearchNode] = {initial_state: root}
 
     heapq.heappush(open_set, (root.f, id(root), root))
 
@@ -80,7 +65,8 @@ def a_star(initial_state: SlidingPuzzleState,
                 nodes_since_global_max_f += 1
 
                 # ** Create new node: **
-                neighbor_node = SearchNode(neighbor_state, serial_number, neighbor_g, neighbor_h, root_h, current_node, action)
+                neighbor_node = SearchNode(
+                    neighbor_state, serial_number, neighbor_g, neighbor_h, root_h, current_node, action)
 
                 # ** Update global if this new node has a smaller h or larger f: **
                 if neighbor_h < global_min_h:
@@ -105,7 +91,8 @@ def a_star(initial_state: SlidingPuzzleState,
                 current_node.children.append(neighbor_node)
                 current_node.child_count += 1
 
-                heapq.heappush(open_set, (neighbor_node.f, id(neighbor_node), neighbor_node))
+                heapq.heappush(open_set, (neighbor_node.f,
+                               id(neighbor_node), neighbor_node))
 
     return None, root
 
@@ -130,8 +117,10 @@ def print_search_tree(node: SearchNode, depth: int = 0):
     for child in node.children:
         print_search_tree(child, depth + 1)
 
+
 def print_nodes_by_serial_order(node: SearchNode):
     all_nodes = []
+
     def traverse(node):
         all_nodes.append(node)
         for child in node.children:
@@ -164,53 +153,96 @@ def calculate_progress(root: SearchNode):
 
     update_progress(root)
 
-SIZE_LIST = [3, 5, 7, 9]
-NUM_MOVES_LIST = [5, 10, 15, 20]
-SAMPLES = 1000
 
-def main():
+def debug_print_search_tree(initial_state, goal_state, solution, search_tree_root):
+    ## Debug print the search tree: ###
+    print("\nInitial State:")
+    print(initial_state)
+    print("\nGoal State:")
+    print(goal_state)
 
-    base_dir = Path(__file__).resolve().parent
-    if base_dir.name != "code":
-        base_dir = base_dir / "code"
+    if solution:
+        print(f"\nSolution found in {len(solution)} moves:")
+        print(" -> ".join(solution))
+    else:
+        print("\nNo solution found.")
 
+    print("\nSearch Tree:\n")
+    print_search_tree(search_tree_root)
+
+    print("\nNodes by serial order:\n")
+    print_nodes_by_serial_order(search_tree_root)
+
+
+def save_sp_search_tree(heuristic_func):
+    heuristic_name = heuristic_func.__name__
     for SIZE in SIZE_LIST:
         for NUM_MOVES in NUM_MOVES_LIST:
             print(f"Generating search trees for size {SIZE} and {NUM_MOVES} moves...")
-
             for sample_idx in tqdm(range(SAMPLES)):
-
                 initial_state, goal_state = generate_sliding_puzzle_problem(SIZE, NUM_MOVES)
-                solution, search_tree_root = a_star(initial_state, goal_state, misplaced_tiles)
+                solution, search_tree_root = a_star(initial_state, goal_state, sp_h_max)
 
                 # Calculate progress for each node
                 calculate_progress(search_tree_root)
 
-                ### Debug print the search tree: ###
-                # print("\nInitial State:")
-                # print(initial_state)
-                # print("\nGoal State:")
-                # print(goal_state)
-
-                # if solution:
-                #     print(f"\nSolution found in {len(solution)} moves:")
-                #     print(" -> ".join(solution))
-                # else:
-                #     print("\nNo solution found.")
-
-                # print("\nSearch Tree:\n")
-                # print_search_tree(search_tree_root)
-
-                # print("\nNodes by serial order:\n")
-                # print_nodes_by_serial_order(search_tree_root)
-
-
+                # Debug print the search tree: #
+                # debug_print_search_tree(initial_state, goal_state, solution, search_tree_root)
+                
                 ### Save the search tree: ###
-                if not os.path.exists(f"{base_dir}/dataset/sp_hmax_size_{SIZE}_moves_{NUM_MOVES}"):
-                    os.makedirs(f"{base_dir}/dataset/sp_hmax_size_{SIZE}_moves_{NUM_MOVES}")
+                if not os.path.exists(f"{base_dir}/dataset/{heuristic_name}_size_{SIZE}_moves_{NUM_MOVES}"):
+                    os.makedirs(
+                        f"{base_dir}/dataset/{heuristic_name}_size_{SIZE}_moves_{NUM_MOVES}")
 
-                with open(f"{base_dir}/dataset/sp_hmax_size_{SIZE}_moves_{NUM_MOVES}/sample_{sample_idx}.pkl", "wb") as f:
+                with open(f"{base_dir}/dataset/{heuristic_name}_size_{SIZE}_moves_{NUM_MOVES}/sample_{sample_idx}.pkl", "wb") as f:
                     pickle.dump(search_tree_root, f)
+
+def save_bw_search_tree(heuristic_func):
+    heuristic_name = heuristic_func.__name__
+    for NUM_BLOCKS in NUM_BLOCKS_LIST:
+        for NUM_STACKS in NUM_STACKS_LIST:
+            for NUM_MOVES in NUM_MOVES_LIST:
+                print(f"Generating samples for {NUM_BLOCKS} blocks, {NUM_STACKS} stacks, {NUM_MOVES} moves")
+                for sample_idx in tqdm(range(SAMPLES)):
+                    initial_state, goal_state = generate_block_world_problem(NUM_BLOCKS, NUM_STACKS, NUM_MOVES)
+                    solution, search_tree_root = a_star(initial_state, goal_state, heuristic_func)
+
+                    # Calculate progress for each node
+                    calculate_progress(search_tree_root)
+
+                    # Create directory if it doesn't exist
+                    output_dir = f"{base_dir}/dataset/{heuristic_name}_blocks_{NUM_BLOCKS}_stacks_{NUM_STACKS}_moves_{NUM_MOVES}"
+                    if not os.path.exists(output_dir):
+                        os.makedirs(output_dir)
+                    # Save the search tree
+                    with open(f"{output_dir}/sample_{sample_idx}.pkl", "wb") as f:
+                        pickle.dump(search_tree_root, f)
+
+# Sliding Puzzle:
+SIZE_LIST = [5, 7]
+
+# Block World:
+NUM_BLOCKS_LIST = [5, 10]
+NUM_STACKS_LIST = [3, 5]
+
+# Problem Settings:
+NUM_MOVES_LIST = [5, 10, 15] 
+SAMPLES = 50
+
+base_dir = Path(__file__).resolve().parent
+if base_dir.name != "code":
+    base_dir = base_dir / "code"
+
+
+def main():
+
+    save_sp_search_tree(sp_manhattan_distance)
+    save_sp_search_tree(sp_misplaced_tiles)
+    #  save_sp_search_tree(sp_h_max)
+
+    save_bw_search_tree(bw_misplaced_blocks)
+    save_bw_search_tree(bw_height_difference)
+    save_bw_search_tree(bw_h_max)
 
 
 if __name__ == "__main__":

@@ -1,11 +1,12 @@
 import copy
+from typing import Dict, Set, Tuple, List
+from collections import defaultdict, namedtuple
+import math
 
 from block_world_generator import BlockWorldState
-from typing import List, Tuple, Set, Dict
-from collections import namedtuple
 
 
-def misplaced_blocks(state: BlockWorldState, goal: BlockWorldState) -> int:
+def bw_misplaced_blocks(state: BlockWorldState, goal: BlockWorldState) -> int:
     """
     Calculate the number of misplaced blocks heuristic.
     Count the number of blocks that are not in their goal position.
@@ -23,7 +24,7 @@ def misplaced_blocks(state: BlockWorldState, goal: BlockWorldState) -> int:
     return misplaced
 
 
-def height_difference(state: BlockWorldState, goal: BlockWorldState) -> int:
+def bw_height_difference(state: BlockWorldState, goal: BlockWorldState) -> int:
     """
     Calculate the total height difference heuristic.
     Sum of the differences between each block's current height and its goal height.
@@ -201,11 +202,8 @@ def build_relaxed_planning_graph(problem: BlockWorldPlanningProblem) -> Tuple[
 
     return proposition_layers, action_layers
 
-from typing import Dict, Set, Tuple
-from collections import defaultdict
-import math
 
-def h_max(block_world_state, block_world_goal_state):
+def bw_h_max(block_world_state, block_world_goal_state):
     """
     Compute the h_max heuristic for the given state in the Block World problem.
     """

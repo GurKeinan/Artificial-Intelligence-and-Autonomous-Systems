@@ -1,7 +1,10 @@
 import random
 from typing import List, Tuple, Optional
 
-class BlockWorldState:
+from general_state import StateInterface
+
+
+class BlockWorldState(StateInterface):
     def __init__(self, num_blocks: int, num_stacks: int, stacks: Optional[List[List[int]]] = None):
         self.num_blocks = num_blocks
         self.num_stacks = num_stacks
@@ -49,12 +52,20 @@ class BlockWorldState:
 def generate_block_world_problem(num_blocks: int, num_stacks: int, num_moves: int) -> Tuple[BlockWorldState, BlockWorldState]:
     goal_state = BlockWorldState(num_blocks, num_stacks)
     initial_state = goal_state
+    visited_states = set()
 
     for _ in range(num_moves):
         actions = initial_state.get_possible_actions()
         action = random.choice(actions)
-        initial_state = initial_state.apply_action(action)
+        new_state = initial_state.apply_action(action)
+        
+        while new_state in visited_states:
+            action = random.choice(actions)
+            new_state = initial_state.apply_action(action)
 
+        visited_states.add(new_state)
+        initial_state = new_state
+        
     return initial_state, goal_state
 
 def main():

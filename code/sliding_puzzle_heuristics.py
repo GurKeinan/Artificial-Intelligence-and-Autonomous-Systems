@@ -1,9 +1,10 @@
-from sliding_puzzle_generator import SlidingPuzzleState
 from typing import List, Tuple, Set, Dict
 from collections import namedtuple
 
+from sliding_puzzle_generator import SlidingPuzzleState
 
-def manhattan_distance(state: SlidingPuzzleState, goal: SlidingPuzzleState) -> int:
+
+def sp_manhattan_distance(state: SlidingPuzzleState, goal: SlidingPuzzleState) -> int:
     """
     Calculate the Manhattan distance heuristic.
     Sum of the distances each tile is from its goal position.
@@ -24,7 +25,8 @@ def manhattan_distance(state: SlidingPuzzleState, goal: SlidingPuzzleState) -> i
                 distance += abs(i - goal_i) + abs(j - goal_j)
     return distance
 
-def misplaced_tiles(state: SlidingPuzzleState, goal: SlidingPuzzleState) -> int:
+
+def sp_misplaced_tiles(state: SlidingPuzzleState, goal: SlidingPuzzleState) -> int:
     """
     Calculate the number of misplaced tiles heuristic.
     Count the number of tiles that are not in their goal position.
@@ -89,7 +91,7 @@ def build_relaxed_planning_graph(problem: SlidingPuzzlePlanningProblem) -> Tuple
     return proposition_layers, action_layers
 
 
-def h_max(state: SlidingPuzzleState, goal: SlidingPuzzleState) -> int:
+def sp_h_max(state: SlidingPuzzleState, goal: SlidingPuzzleState) -> int:
     """Return the h_max heuristic value for the given problem."""
     problem = SlidingPuzzlePlanningProblem(state, goal)
     prop_layers, act_layers = build_relaxed_planning_graph(problem)
@@ -124,11 +126,3 @@ def h_max(state: SlidingPuzzleState, goal: SlidingPuzzleState) -> int:
         prop_layers_costs.append(prop_layer_cost)
 
     return max(prop_layers_costs[-1][prop] for prop in goal_props)
-
-
-
-
-
-
-
-

@@ -9,7 +9,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 import numpy as np
 
-from sliding_puzzle_A_star import SearchNode
+from general_state import StateInterface, SearchNode
 
 def load_data(root_dir):
     data_list = []
@@ -31,9 +31,6 @@ def compute_score(nodes, targets, print_res):
     nodes = np.array(nodes)
     targets = np.array(targets)
     sse = sum((nodes - targets) ** 2)
-
-    if print_res:
-        print(f"RMSE: {sse}")
     return sse
 
 def vesp_benchmark(root, print_res=False):
@@ -154,7 +151,7 @@ def random_forest_benchmark(root, print_res=False):
     return y_pred_full, targets, res, regr
 
 def plot_feature_importance(model, feature_names):
-    importance = model.feature_importance_
+    importance = model.feature_importances_
     indices = np.argsort(importance)[::-1]
 
     plt.figure(figsize=(10, 6))
@@ -176,13 +173,17 @@ def main():
     benchmark_models = [vesp_benchmark, vasp_benchmark, pbp_benchmark, random_forest_benchmark]
 
     total_samples = 0
-    rf_model = None
     for benchmark_model in benchmark_models:
         results = []
         for tree, name in zip(data, names):
             if benchmark_model.__name__ == 'random_forest_benchmark':
                 nodes, targets, sse, model = benchmark_model(tree, print_res=False)
-                rf_model = model
+                feature_names = [
+                    'serial_number', 'g', 'h', 'f', 'child_count',
+                    'h_0', 'min_h_seen', 'nodes_since_min_h',
+                    'max_f_seen', 'nodes_since_max_f'
+                ]
+                plot_feature_importance(model, feature_names)
             else:
                 nodes, targets, sse = benchmark_model(tree, print_res=False)
             results.append((nodes, targets, sse))
@@ -191,13 +192,6 @@ def main():
         mse = sum([r[2] for r in results]) / total_samples
         print(f"MSE for {benchmark_model.__name__}: {mse}")
 
-    if rf_model is not None:
-        feature_names = [
-            'serial_number', 'g', 'h', 'f', 'child_count',
-            'h_0', 'min_h_seen', 'nodes_since_min_h',
-            'max_f_seen', 'nodes_since_max_f'
-        ]
-        plot_feature_importance(rf_model, feature_names)
 
 if __name__ == "__main__":
     main()
