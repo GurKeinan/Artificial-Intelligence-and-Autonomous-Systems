@@ -8,7 +8,7 @@ from torch.optim import Adam
 from torch_geometric.nn import GCNConv, GATConv
 from torch_geometric.nn import global_mean_pool
 
-from read_tree_search import TreeDataset
+from read_tree_search import get_dataloaders
 from general_state import SearchNode
 
 class QuickResidualGNN(torch.nn.Module):
@@ -51,11 +51,6 @@ class QuickResidualGNN(torch.nn.Module):
 
         return torch.sigmoid(x).view(-1)
 
-def get_dataloaders(root_dir, batch_size=32, test_ratio=0.2):
-    dataset = TreeDataset(root_dir=root_dir, test_ratio=test_ratio)
-    print(f"Dataset size: {len(dataset)}")
-    loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
-    return loader
 
 def train(model, loader, optimizer, loss_fn, epochs):
     for epoch in range(epochs):
@@ -70,7 +65,7 @@ def train(model, loader, optimizer, loss_fn, epochs):
             epoch_loss += loss.item()
         print(f'Epoch {epoch + 1}, Loss: {epoch_loss:.4f}')
 
-def test(model, loader, mask_type):
+def evaluate(model, loader, mask_type):
     model.eval()
     total_loss = 0
     total_mse = 0
@@ -130,9 +125,9 @@ def main():
     train(model, loader, optimizer, loss_fn, epochs)
     print("Finished Training")
 
-    test(model, loader, "Train")
-    test(model, loader, "Test")
-    test(model, loader, "Full")
+    evaluate(model, loader, "Train")
+    evaluate(model, loader, "Test")
+    evaluate(model, loader, "Full")
 
 if __name__ == "__main__":
     main()

@@ -106,6 +106,13 @@ def tree_to_graph(root, test_ratio=0):
 
     else:
         return Data(x=x, edge_index=edge_index, y=y)
+    
+    
+def get_dataloaders(root_dir, batch_size=32, test_ratio=0.2):
+    dataset = TreeDataset(root_dir=root_dir, test_ratio=test_ratio)
+    print(f"Dataset size: {len(dataset)}")
+    loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    return loader
 
 
 def main():
