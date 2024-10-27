@@ -58,14 +58,16 @@ def generate_block_world_problem(num_blocks: int, num_stacks: int, num_moves: in
         actions = initial_state.get_possible_actions()
         action = random.choice(actions)
         new_state = initial_state.apply_action(action)
-        
-        while new_state in visited_states:
+
+        num_of_tries = 0
+        while new_state in visited_states and num_of_tries < 100:
             action = random.choice(actions)
             new_state = initial_state.apply_action(action)
+            num_of_tries += 1
 
         visited_states.add(new_state)
         initial_state = new_state
-        
+
     return initial_state, goal_state
 
 def main():
