@@ -188,7 +188,7 @@ def save_sp_search_tree(heuristic_func):
 
                 # Debug print the search tree: #
                 # debug_print_search_tree(initial_state, goal_state, solution, search_tree_root)
-                
+
                 ### Save the search tree: ###
                 if not os.path.exists(f"{base_dir}/dataset/{heuristic_name}_size_{SIZE}_moves_{NUM_MOVES}"):
                     os.makedirs(
@@ -226,7 +226,7 @@ NUM_BLOCKS_LIST = [5, 10]
 NUM_STACKS_LIST = [3, 5]
 
 # Problem Settings:
-NUM_MOVES_LIST = [5, 10, 15] 
+NUM_MOVES_LIST = [7, 12]
 SAMPLES = 50
 
 base_dir = Path(__file__).resolve().parent
@@ -236,8 +236,8 @@ if base_dir.name != "code":
 
 def main():
 
-    save_sp_search_tree(sp_manhattan_distance)
-    save_sp_search_tree(sp_misplaced_tiles)
+    # save_sp_search_tree(sp_manhattan_distance)
+    # save_sp_search_tree(sp_misplaced_tiles)
     #  save_sp_search_tree(sp_h_max)
 
     save_bw_search_tree(bw_misplaced_blocks)
