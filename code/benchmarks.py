@@ -26,15 +26,10 @@ log_filename = log_dir / f"benchmarks_{timestamp}.log"
 file_handler = logging.FileHandler(log_filename)
 file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 
-# Create console handler
-console_handler = logging.StreamHandler()
-console_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-
 # Set up logger
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 logger.addHandler(file_handler)
-logger.addHandler(console_handler)
 
 def analyze_tree(root):
     """Analyze a search tree for its properties."""

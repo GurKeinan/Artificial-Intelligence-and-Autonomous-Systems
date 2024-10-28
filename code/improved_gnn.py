@@ -21,22 +21,13 @@ log_dir.mkdir(exist_ok=True)
 timestamp = datetime.now().strftime('%d.%m.%Y_%H:%M:%S')
 log_filename = log_dir / f"training_GNN_{timestamp}.log"
 
-# Create file handler with immediate flush
 file_handler = logging.FileHandler(log_filename)
 file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-
-# Create console handler
-console_handler = logging.StreamHandler()
-console_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 
 # Set up logger
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 logger.addHandler(file_handler)
-logger.addHandler(console_handler)
-
-# Force immediate flush after each write
-logging.getLogger().handlers[0].flush = lambda: None
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -150,16 +141,14 @@ class ImprovedSearchGNN(torch.nn.Module):
 
         return torch.sigmoid(node_predictions).view(-1)
 
-
-def train_with_warmup(model, loader, optimizer, epochs, warmup_epochs=10,
-                     accumulation_steps=4, max_grad_norm=1.0):
-    """Training function with special handling for problematic batches"""
+def train_with_warmup(model, loader, optimizer, epochs, warmup_epochs=10, max_grad_norm=1.0):
+    """Training function with simplified batch processing"""
 
     scheduler = torch.optim.lr_scheduler.OneCycleLR(
         optimizer,
         max_lr=0.001,
         epochs=epochs,
-        steps_per_epoch=len(loader) // accumulation_steps,
+        steps_per_epoch=len(loader),  # No more division by accumulation_steps
         pct_start=warmup_epochs/epochs
     )
 
@@ -172,9 +161,10 @@ def train_with_warmup(model, loader, optimizer, epochs, warmup_epochs=10,
         model.train()
         total_loss = 0
         valid_batches = 0
-        optimizer.zero_grad()
 
         for batch_idx, batch in tqdm(enumerate(loader), total=len(loader)):
+            optimizer.zero_grad()  # Zero gradients at start of each batch
+
             batch = batch.to(device)
             predictions = model(batch)
 
@@ -184,19 +174,18 @@ def train_with_warmup(model, loader, optimizer, epochs, warmup_epochs=10,
 
                 if len(train_pred) > 0:
                     loss = criterion(train_pred, train_true)
-                    loss = loss / accumulation_steps
                     loss.backward()
 
-                    # Store loss value and clear immediate tensors
-                    total_loss += loss.item() * accumulation_steps
-                    valid_batches += 1
+                    # Gradient clipping
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
 
-            if (batch_idx + 1) % accumulation_steps == 0:
-                # Gradient clipping
-                torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
-                optimizer.step()
-                scheduler.step()
-                optimizer.zero_grad()
+                    # Immediate optimizer step
+                    optimizer.step()
+                    scheduler.step()
+
+                    # Store loss value
+                    total_loss += loss.item()
+                    valid_batches += 1
 
         if valid_batches > 0:
             avg_loss = total_loss / valid_batches
@@ -213,7 +202,7 @@ def evaluate(model, loader, mask_type="Test"):
     """Evaluation function with memory management"""
     model.eval()
     total_loss = 0
-    num_batches = 0
+    num_samples = 0
     criterion = torch.nn.MSELoss()
 
     with torch.no_grad():
@@ -231,8 +220,8 @@ def evaluate(model, loader, mask_type="Test"):
 
                 if mask.sum() > 0:
                     loss = criterion(predictions[mask], batch.y[mask])
-                    total_loss += loss.item()
-                    num_batches += 1
+                    total_loss += loss.item() * mask.sum()
+                    num_samples += mask.sum()
 
                 # Cleanup
                 del batch, predictions, loss
@@ -248,8 +237,8 @@ def evaluate(model, loader, mask_type="Test"):
                 else:
                     raise e
 
-    if num_batches > 0:
-        avg_loss = total_loss / num_batches
+    if num_samples > 0:
+        avg_loss = total_loss / num_samples
         logger.info(f'{mask_type} Average Loss: {avg_loss:.4f}')
         return avg_loss
     return None
@@ -319,8 +308,7 @@ def main():
         loader,
         optimizer,
         epochs=100,
-        warmup_epochs=10,
-        accumulation_steps=4  # Accumulate gradients over 4 batches
+        warmup_epochs=10
     )
 
 if __name__ == "__main__":
