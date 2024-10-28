@@ -19,7 +19,7 @@ log_dir.mkdir(exist_ok=True)
 
 # Create timestamp for the log file
 timestamp = datetime.now().strftime('%d.%m.%Y_%H:%M:%S')
-log_filename = log_dir / f"training_{timestamp}.log"
+log_filename = log_dir / f"training_GNN_{timestamp}.log"
 
 # Create file handler with immediate flush
 file_handler = logging.FileHandler(log_filename)

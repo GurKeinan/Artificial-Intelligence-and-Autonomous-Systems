@@ -1,29 +1,98 @@
+from datetime import datetime
 import pickle
 import os
 from pathlib import Path
 import random
+import logging
 
 import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 import numpy as np
+from tqdm import tqdm
 
 from general_state import StateInterface, SearchNode
 
-def load_data(root_dir):
+# Create logs directory if it doesn't exist
+log_dir = Path("logs")
+log_dir.mkdir(exist_ok=True)
+
+# Create timestamp for the log file
+timestamp = datetime.now().strftime('%d.%m.%Y_%H:%M:%S')
+log_filename = log_dir / f"benchmarks_{timestamp}.log"
+
+# Create file handler with immediate flush
+file_handler = logging.FileHandler(log_filename)
+file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+
+# Create console handler
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+
+# Set up logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logger.addHandler(file_handler)
+logger.addHandler(console_handler)
+
+def analyze_tree(root):
+    """Analyze a search tree for its properties."""
+    num_nodes = 0
+    max_depth = 0
+    max_branch = 0
+
+    def traverse(node, depth=0):
+        nonlocal num_nodes, max_depth, max_branch
+        num_nodes += 1
+        max_depth = max(max_depth, depth)
+        max_branch = max(max_branch, len(node.children))
+
+        for child in node.children:
+            traverse(child, depth + 1)
+
+    traverse(root)
+    return num_nodes, max_depth, max_branch
+
+def is_tree_acceptable(root, max_nodes=10000, max_depth=16, max_branching=10):
+    """Check if a tree meets our criteria for inclusion."""
+    num_nodes, depth, branching = analyze_tree(root)
+    logger.debug(f"Tree properties - Nodes: {num_nodes}, Depth: {depth}, Max Branching: {branching}")
+    return (num_nodes <= max_nodes and
+            depth <= max_depth and
+            branching <= max_branching)
+
+def load_filtered_data(root_dir, max_nodes=10000, max_depth=16, max_branching=10):
     data_list = []
     name_list = []
     root_path = Path(root_dir)
 
-    datasets = '\n'.join([str(p.as_posix()) for p in root_path.iterdir() if p.name != '.DS_Store'])
-    print(f"Read Datasets:\n{datasets}")
+    accepted_count = 0
+    rejected_count = 0
 
-    for pkl_file in root_path.rglob('*.pkl'):
-        with pkl_file.open('rb') as f:
-            tree = pickle.load(f)
-            name_list.append(root_path / pkl_file)
-            data_list.append(tree)
+    datasets = '\n'.join([str(p.as_posix()) for p in root_path.iterdir() if p.name != '.DS_Store'])
+    logger.info(f"Read Datasets:\n{datasets}")
+
+    total_files = sum(1 for _ in root_path.rglob('*.pkl'))
+    logger.info(f"Found {total_files} PKL files")
+
+    for pkl_file in tqdm(root_path.rglob('*.pkl'), total=total_files):
+        try:
+            with pkl_file.open('rb') as f:
+                tree = pickle.load(f)
+                if is_tree_acceptable(tree, max_nodes, max_depth, max_branching):
+                    name_list.append(root_path / pkl_file)
+                    data_list.append(tree)
+                    accepted_count += 1
+                else:
+                    rejected_count += 1
+        except Exception as e:
+            logger.warning(f"Failed to process {pkl_file}: {str(e)}")
+            continue
+
+    logger.info(f"Processing Summary:")
+    logger.info(f"- Accepted trees: {accepted_count}")
+    logger.info(f"- Rejected trees (too complex): {rejected_count}")
 
     return data_list, name_list
 
@@ -54,7 +123,6 @@ def vesp_benchmark(root, print_res=False):
             traverse(child, parent_id=node_id)
 
     traverse(root)
-
     res = compute_score(nodes, targets, print_res)
     return nodes, targets, res
 
@@ -78,14 +146,12 @@ def vasp_benchmark(root, window_size=50, print_res=False):
             se_e = window_average * node.min_h_seen
             vasp = node.serial_number / (node.serial_number + se_e)
         nodes.append(vasp)
-
         targets.append(node.progress)
 
         for child in node.children:
             traverse(child, parent_id=node_id)
 
     traverse(root)
-
     res = compute_score(nodes, targets, print_res)
     return nodes, targets, res
 
@@ -101,23 +167,21 @@ def pbp_benchmark(root, print_res=False):
         else:
             pbp = node.g / (node.h + node.g)
         nodes.append(pbp)
-
         targets.append(node.progress)
 
         for child in node.children:
             traverse(child, parent_id=node_id)
 
     traverse(root)
-
     res = compute_score(nodes, targets, print_res)
     return nodes, targets, res
 
-def random_forest_benchmark(root, print_res=False):
-    nodes = []
+def collect_tree_data(root):
+    """Collect features and targets from a single tree."""
+    features = []
     targets = []
 
-    def traverse(node, parent_id=None):
-        node_id = len(nodes)
+    def traverse(node):
         node_features = [
             node.serial_number,
             node.g,
@@ -130,25 +194,50 @@ def random_forest_benchmark(root, print_res=False):
             node.max_f_seen,
             node.nodes_since_max_f,
         ]
-        nodes.append(node_features)
+        features.append(node_features)
         targets.append(node.progress)
 
         for child in node.children:
-            traverse(child, node_id)
+            traverse(child)
 
     traverse(root)
+    return features, targets
 
-    if len(nodes) < 2:
-        train_X, train_y = nodes, targets
-    else:
-        train_X, test_X, train_y, test_y = train_test_split(nodes, targets, test_size=0.2, random_state=42)
-    regr = RandomForestRegressor(n_estimators=50, max_depth=3, random_state=42)
-    regr.fit(train_X, train_y)
+def random_forest_benchmark(trees, print_res=False):
+    """Train and evaluate random forest on all trees combined."""
+    logger.info("Collecting data from all trees...")
+    all_features = []
+    all_targets = []
 
-    y_pred_full = regr.predict(nodes)
+    # Collect data from all trees
+    for tree in tqdm(trees):
+        features, targets = collect_tree_data(tree)
+        all_features.extend(features)
+        all_targets.extend(targets)
 
-    res = compute_score(y_pred_full, targets, print_res)
-    return y_pred_full, targets, res, regr
+    all_features = np.array(all_features)
+    all_targets = np.array(all_targets)
+
+    logger.info(f"Total nodes collected: {len(all_features)}")
+
+    # Split data into train and test sets
+    X_train, X_test, y_train, y_test = train_test_split(
+        all_features, all_targets, test_size=0.2, random_state=42
+    )
+
+    # Train model
+    logger.info("Training Random Forest model...")
+    regr = RandomForestRegressor(n_estimators=100, max_depth=10, random_state=42, n_jobs=-1)
+    regr.fit(X_train, y_train)
+
+    # Evaluate
+    train_pred = regr.predict(X_train)
+    test_pred = regr.predict(X_test)
+
+    train_mse = mean_squared_error(y_train, train_pred)
+    test_mse = mean_squared_error(y_test, test_pred)
+
+    return regr, train_mse, test_mse
 
 def plot_feature_importance(model, feature_names):
     importance = model.feature_importances_
@@ -157,7 +246,8 @@ def plot_feature_importance(model, feature_names):
     plt.figure(figsize=(10, 6))
     plt.title("Feature Importance in Random Forest Model")
     plt.bar(range(len(importance)), importance[indices])
-    plt.xticks(range(len(importance)), [feature_names[i] for i in indices], rotation=90)
+    plt.xticks(range(len(importance)), [feature_names[i] for i in indices], rotation=45)
+    plt.ylabel('Feature Importance')
     plt.tight_layout()
     plt.show()
 
@@ -167,31 +257,50 @@ def main():
         base_dir = base_dir / "code"
     data_dir = base_dir / "dataset"
 
-    data, names = load_data(data_dir)
-    print(f"Loaded {len(data)} search trees.")
+    # Load filtered data
+    data, names = load_filtered_data(
+        root_dir=data_dir,
+        max_nodes=10000,
+        max_depth=16,
+        max_branching=10
+    )
+    logger.info(f"Loaded {len(data)} filtered search trees.")
 
-    benchmark_models = [vesp_benchmark, vasp_benchmark, pbp_benchmark, random_forest_benchmark]
-
+    # Traditional benchmarks
+    benchmark_models = [vesp_benchmark, vasp_benchmark, pbp_benchmark]
     total_samples = 0
+
     for benchmark_model in benchmark_models:
         results = []
-        for tree, name in zip(data, names):
-            if benchmark_model.__name__ == 'random_forest_benchmark':
-                nodes, targets, sse, model = benchmark_model(tree, print_res=False)
-                feature_names = [
-                    'serial_number', 'g', 'h', 'f', 'child_count',
-                    'h_0', 'min_h_seen', 'nodes_since_min_h',
-                    'max_f_seen', 'nodes_since_max_f'
-                ]
-                plot_feature_importance(model, feature_names)
-            else:
+        logger.info(f"Running {benchmark_model.__name__}...")
+
+        for tree, name in tqdm(zip(data, names), total=len(data)):
+            try:
                 nodes, targets, sse = benchmark_model(tree, print_res=False)
-            results.append((nodes, targets, sse))
-            total_samples += len(nodes)
+                results.append((nodes, targets, sse))
+                total_samples += len(nodes)
+            except Exception as e:
+                logger.warning(f"Failed to process tree {name} with {benchmark_model.__name__}: {str(e)}")
+                continue
 
-        mse = sum([r[2] for r in results]) / total_samples
-        print(f"MSE for {benchmark_model.__name__}: {mse}")
+        if results:
+            mse = sum([r[2] for r in results]) / total_samples
+            logger.info(f"MSE for {benchmark_model.__name__}: {mse}")
+        else:
+            logger.warning(f"No successful results for {benchmark_model.__name__}")
 
+    # Random Forest benchmark (on all trees combined)
+    logger.info("\nRunning Random Forest benchmark...")
+    feature_names = [
+        'serial_number', 'g', 'h', 'f', 'child_count',
+        'h_0', 'min_h_seen', 'nodes_since_min_h',
+        'max_f_seen', 'nodes_since_max_f'
+    ]
+
+    rf_model, train_mse, test_mse = random_forest_benchmark(data)
+    logger.info(f"Train MSE for Random Forest: {train_mse:.4f}")
+    logger.info(f"Test MSE for Random Forest: {test_mse:.4f}")
+    plot_feature_importance(rf_model, feature_names)
 
 if __name__ == "__main__":
     main()
