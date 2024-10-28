@@ -9,13 +9,35 @@ from tqdm import tqdm
 import gc
 import psutil
 import os
+from datetime import datetime
 
 from read_tree_search import get_filtered_dataloaders
 
-# Set up logging
-logging.basicConfig(level=logging.INFO,
-                   format='%(asctime)s - %(levelname)s - %(message)s')
+# Create logs directory if it doesn't exist
+log_dir = Path("logs")
+log_dir.mkdir(exist_ok=True)
+
+# Create timestamp for the log file
+timestamp = datetime.now().strftime('%d.%m.%Y_%H:%M:%S')
+log_filename = log_dir / f"training_{timestamp}.log"
+
+# Create file handler with immediate flush
+file_handler = logging.FileHandler(log_filename)
+file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+
+# Create console handler
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+
+# Set up logger
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logger.addHandler(file_handler)
+logger.addHandler(console_handler)
+
+# Force immediate flush after each write
+logging.getLogger().handlers[0].flush = lambda: None
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class ImprovedSearchGNN(torch.nn.Module):
@@ -133,26 +155,6 @@ def train_with_warmup(model, loader, optimizer, epochs, warmup_epochs=10,
                      accumulation_steps=4, max_grad_norm=1.0):
     """Training function with special handling for problematic batches"""
 
-    def print_memory_stats(batch_idx=None):
-        process = psutil.Process(os.getpid())
-        ram_usage = process.memory_info().rss / 1024**2
-        batch_info = f" (Batch {batch_idx})" if batch_idx is not None else ""
-        logger.info(f"RAM Usage{batch_info}: {ram_usage:.2f}MB")
-
-    def cleanup_memory():
-        # Force garbage collection
-        gc.collect()
-
-        # Clear any remaining tensors not part of the model
-        for obj in gc.get_objects():
-            try:
-                if torch.is_tensor(obj) and not hasattr(obj, '_backward_hooks'):
-                    del obj
-            except Exception:
-                pass
-
-        gc.collect()
-
     scheduler = torch.optim.lr_scheduler.OneCycleLR(
         optimizer,
         max_lr=0.001,
@@ -164,104 +166,48 @@ def train_with_warmup(model, loader, optimizer, epochs, warmup_epochs=10,
     model = model.to(device)
     criterion = torch.nn.MSELoss()
 
-    # Initial cleanup
-    cleanup_memory()
-    print_memory_stats()
-
     for epoch in range(epochs):
-        logger.info(f"\nStarting Epoch {epoch + 1}")
-        print_memory_stats()
+        logger.info(f"Starting Epoch {epoch + 1}")
 
         model.train()
         total_loss = 0
         valid_batches = 0
         optimizer.zero_grad()
 
-        # Store intermediate tensors for cleanup
-        stored_tensors = []
-
         for batch_idx, batch in tqdm(enumerate(loader), total=len(loader)):
-            # Extra monitoring around problematic batch
-            if batch_idx in range(115, 125):
-                logger.info(f"\nProcessing sensitive batch {batch_idx}")
-                print_memory_stats(batch_idx)
-                cleanup_memory()
+            batch = batch.to(device)
+            predictions = model(batch)
 
-            try:
-                batch = batch.to(device)
-                predictions = model(batch)
+            if hasattr(batch, 'train_mask'):
+                train_pred = predictions[batch.train_mask]
+                train_true = batch.y[batch.train_mask]
 
-                if hasattr(batch, 'train_mask'):
-                    train_pred = predictions[batch.train_mask]
-                    train_true = batch.y[batch.train_mask]
+                if len(train_pred) > 0:
+                    loss = criterion(train_pred, train_true)
+                    loss = loss / accumulation_steps
+                    loss.backward()
 
-                    if len(train_pred) > 0:
-                        loss = criterion(train_pred, train_true)
-                        loss = loss / accumulation_steps
-                        loss.backward()
+                    # Store loss value and clear immediate tensors
+                    total_loss += loss.item() * accumulation_steps
+                    valid_batches += 1
 
-                        # Store loss value and clear immediate tensors
-                        total_loss += loss.item() * accumulation_steps
-                        valid_batches += 1
-
-                if (batch_idx + 1) % accumulation_steps == 0:
-                    # Gradient clipping
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
-                    optimizer.step()
-                    scheduler.step()
-                    optimizer.zero_grad()
-                    cleanup_memory()
-
-                # Immediate cleanup after each batch
-                del batch, predictions
-                if 'train_pred' in locals(): del train_pred
-                if 'train_true' in locals(): del train_true
-                if 'loss' in locals(): del loss
-                cleanup_memory()
-
-                # Extra monitoring after problematic batch
-                if batch_idx in range(115, 125):
-                    print_memory_stats(batch_idx)
-
-            except RuntimeError as e:
-                if "memory" in str(e).lower():
-                    logger.error(f"Memory error on batch {batch_idx}. Attempting recovery...")
-                    cleanup_memory()
-                    print_memory_stats(batch_idx)
-
-                    # Clear optimizer gradients
-                    optimizer.zero_grad()
-
-                    # Try to process with fresh memory
-                    cleanup_memory()
-                    continue
-                else:
-                    raise e
-
-            # Additional cleanup every 50 batches
-            if batch_idx % 50 == 0:
-                cleanup_memory()
-                print_memory_stats(batch_idx)
+            if (batch_idx + 1) % accumulation_steps == 0:
+                # Gradient clipping
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
+                optimizer.step()
+                scheduler.step()
+                optimizer.zero_grad()
 
         if valid_batches > 0:
             avg_loss = total_loss / valid_batches
             logger.info(f'Epoch {epoch + 1}, Loss: {avg_loss:.4f}, '
                      f'LR: {scheduler.get_last_lr()[0]:.6f}')
 
-        # Cleanup after epoch
-        cleanup_memory()
-        print_memory_stats()
-
         if epoch % 5 == 0:
             # Save model state before evaluation
             save_checkpoint(model, optimizer, epoch, f'checkpoint_epoch_{epoch}.pt')
-
-            # Evaluate with memory cleanup
-            cleanup_memory()
             evaluate(model, loader, "Train")
-            cleanup_memory()
             evaluate(model, loader, "Test")
-            cleanup_memory()
 
 def evaluate(model, loader, mask_type="Test"):
     """Evaluation function with memory management"""
