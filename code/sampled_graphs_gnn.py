@@ -148,19 +148,11 @@ class SampledGNN(torch.nn.Module):
         )
 
         # GNN layers
-        self.gat_layers = torch.nn.ModuleList()
         self.gcn_layers = torch.nn.ModuleList()
         self.norms = torch.nn.ModuleList()
         self.skip_layers = torch.nn.ModuleList()
 
         for _ in range(num_layers):
-            self.gat_layers.append(GATConv(
-                hidden_dim,
-                hidden_dim // heads,
-                heads=heads,
-                dropout=dropout
-            ))
-
             self.gcn_layers.append(GCNConv(
                 hidden_dim,
                 hidden_dim,
@@ -197,10 +189,9 @@ class SampledGNN(torch.nn.Module):
         for i in range(self.num_layers):
             prev_x = x
 
-            gat_out = self.gat_layers[i](x, edge_index)
             gcn_out = self.gcn_layers[i](x, edge_index, edge_weight)
 
-            x = gat_out + gcn_out
+            x = gcn_out
             x = self.norms[i](x, batch)
             x = F.elu(x)
             x = F.dropout(x, p=self.dropout, training=self.training)
@@ -213,6 +204,8 @@ class SampledGNN(torch.nn.Module):
         node_predictions = self.prediction_head(x)
 
         return torch.sigmoid(node_predictions).view(-1)
+
+import torch
 
 def train_sampled_gnn(model, original_loader, optimizer, epochs,
                      warmup_epochs=10, max_grad_norm=1.0):
@@ -235,6 +228,8 @@ def train_sampled_gnn(model, original_loader, optimizer, epochs,
         max_distance=MAX_DISTANCE,
         batch_size=BATCH_SIZE
     )
+
+    best_val_loss = float('inf')
 
     for epoch in range(epochs):
         logger.info(f"Starting Epoch {epoch + 1}")
@@ -269,7 +264,12 @@ def train_sampled_gnn(model, original_loader, optimizer, epochs,
 
         if epoch % 5 == 0:
             evaluate_sampled_model(model, sampled_loader, "Train")
-            evaluate_sampled_model(model, sampled_loader, "Test")
+            val_loss = evaluate_sampled_model(model, sampled_loader, "Test")
+
+            if val_loss is not None and val_loss < best_val_loss:
+                best_val_loss = val_loss
+                torch.save(model.state_dict(), 'best_sample_training_model.pth')
+                logger.info(f'New best model saved with validation loss: {best_val_loss:.4f}')
 
 def evaluate_sampled_model(model, loader, mask_type="Test"):
     """Evaluate the model on sampled subgraphs"""
@@ -352,5 +352,25 @@ def main():
         warmup_epochs=WARMUP_EPOCHS
     )
 
+    # Load the best model
+    best_model_path = 'best_sample_training_model.pth'
+    model.load_state_dict(torch.load(best_model_path))
+    logger.info("Best model loaded from %s", best_model_path)
+
+    # Evaluate the best model on the entire dataset
+    logger.info("Evaluating the best model on the entire dataset...")
+    full_loader = get_filtered_dataloaders(
+        root_dir=data_dir,
+        processed_path=processed_path,
+        batch_size=BATCH_SIZE,
+        test_ratio=0.0,  # Use the entire dataset for evaluation
+        max_nodes=MAX_NODES,
+    )
+    evaluate_sampled_model(model, full_loader, "Full")
+
+
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        logger.exception("Fatal error has occurred")
