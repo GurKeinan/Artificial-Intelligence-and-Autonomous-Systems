@@ -31,11 +31,8 @@ class SerializableDataLoader:
         return len(self._loader)
 
 class FilteredTreeDataset(InMemoryDataset):
-    def __init__(self, root_dir, max_nodes=1000, max_depth=50, max_branching=20,
-                 test_ratio=0, transform=None, pre_transform=None):
+    def __init__(self, root_dir, max_nodes, test_ratio=0, transform=None, pre_transform=None):
         self.max_nodes = max_nodes
-        self.max_depth = max_depth
-        self.max_branching = max_branching
         super(FilteredTreeDataset, self).__init__(root_dir, transform, pre_transform)
         self.root_dir = root_dir
         self.test_ratio = test_ratio
@@ -48,31 +45,24 @@ class FilteredTreeDataset(InMemoryDataset):
     def analyze_tree(self, root):
         """Analyze a search tree for its properties."""
         num_nodes = 0
-        max_depth = 0
-        max_branch = 0
 
         def traverse(node, depth=0):
-            nonlocal num_nodes, max_depth, max_branch
+            nonlocal num_nodes
             num_nodes += 1
-            max_depth = max(max_depth, depth)
-            max_branch = max(max_branch, len(node.children))
-
             for child in node.children:
                 traverse(child, depth + 1)
 
         traverse(root)
-        return num_nodes, max_depth, max_branch
+        return num_nodes
 
     def is_tree_acceptable(self, root):
         """Check if a tree meets our criteria for inclusion."""
-        num_nodes, depth, branching = self.analyze_tree(root)
+        num_nodes = self.analyze_tree(root)
 
         # Log the tree properties for monitoring
-        logger.debug(f"Tree properties - Nodes: {num_nodes}, Depth: {depth}, Max Branching: {branching}")
+        logger.debug(f"Tree properties - Nodes: {num_nodes}")
 
-        return (num_nodes <= self.max_nodes and
-                depth <= self.max_depth and
-                branching <= self.max_branching)
+        return (num_nodes <= self.max_nodes)
 
     def load_data(self):
         data_list = []
@@ -282,8 +272,7 @@ def load_processed_data(load_path):
         raise
 
 def get_filtered_dataloaders(root_dir, processed_path=None, batch_size=32,
-                           test_ratio=0.2, max_nodes=1000, max_depth=50,
-                           max_branching=20, force_recache=False):
+                           test_ratio=0.2, max_nodes=1000, force_recache=False):
     """Get DataLoader with filtered data based on complexity criteria."""
     if processed_path:
         processed_path = Path(processed_path)
@@ -301,8 +290,6 @@ def get_filtered_dataloaders(root_dir, processed_path=None, batch_size=32,
     dataset = FilteredTreeDataset(
         root_dir=root_dir,
         max_nodes=max_nodes,
-        max_depth=max_depth,
-        max_branching=max_branching,
         test_ratio=test_ratio
     )
     loader = SerializableDataLoader(dataset, batch_size=batch_size, shuffle=True)
@@ -327,9 +314,7 @@ def main():
         processed_path=processed_path,
         batch_size=32,
         test_ratio=0.2,
-        max_nodes=1000,
-        max_depth=50,
-        max_branching=20
+        max_nodes=1000
     )
 
     print(f"Dataset loaded with {len(loader)} batches")

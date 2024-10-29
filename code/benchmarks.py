@@ -34,30 +34,24 @@ logger.addHandler(file_handler)
 def analyze_tree(root):
     """Analyze a search tree for its properties."""
     num_nodes = 0
-    max_depth = 0
-    max_branch = 0
 
     def traverse(node, depth=0):
-        nonlocal num_nodes, max_depth, max_branch
+        nonlocal num_nodes
         num_nodes += 1
-        max_depth = max(max_depth, depth)
-        max_branch = max(max_branch, len(node.children))
 
         for child in node.children:
             traverse(child, depth + 1)
 
     traverse(root)
-    return num_nodes, max_depth, max_branch
+    return num_nodes
 
-def is_tree_acceptable(root, max_nodes=10000, max_depth=16, max_branching=10):
+def is_tree_acceptable(root, max_nodes=10000):
     """Check if a tree meets our criteria for inclusion."""
-    num_nodes, depth, branching = analyze_tree(root)
-    logger.debug(f"Tree properties - Nodes: {num_nodes}, Depth: {depth}, Max Branching: {branching}")
-    return (num_nodes <= max_nodes and
-            depth <= max_depth and
-            branching <= max_branching)
+    num_nodes = analyze_tree(root)
+    logger.debug(f"Tree properties - Nodes: {num_nodes}")
+    return (num_nodes <= max_nodes)
 
-def load_filtered_data(root_dir, max_nodes=10000, max_depth=16, max_branching=10):
+def load_filtered_data(root_dir, max_nodes=10000):
     data_list = []
     name_list = []
     root_path = Path(root_dir)
@@ -75,7 +69,7 @@ def load_filtered_data(root_dir, max_nodes=10000, max_depth=16, max_branching=10
         try:
             with pkl_file.open('rb') as f:
                 tree = pickle.load(f)
-                if is_tree_acceptable(tree, max_nodes, max_depth, max_branching):
+                if is_tree_acceptable(tree, max_nodes):
                     name_list.append(root_path / pkl_file)
                     data_list.append(tree)
                     accepted_count += 1
@@ -255,9 +249,7 @@ def main():
     # Load filtered data
     data, names = load_filtered_data(
         root_dir=data_dir,
-        max_nodes=10000,
-        max_depth=16,
-        max_branching=10
+        max_nodes=20000
     )
     logger.info(f"Loaded {len(data)} filtered search trees.")
 

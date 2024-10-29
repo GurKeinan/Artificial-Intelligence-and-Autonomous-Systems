@@ -148,7 +148,7 @@ def train_with_warmup(model, loader, optimizer, epochs, warmup_epochs=10, max_gr
         optimizer,
         max_lr=0.001,
         epochs=epochs,
-        steps_per_epoch=len(loader),  # No more division by accumulation_steps
+        steps_per_epoch=len(loader), 
         pct_start=warmup_epochs/epochs
     )
 
@@ -257,6 +257,12 @@ def save_checkpoint(model, optimizer, epoch, filename):
     torch.save(checkpoint, checkpoint_dir / filename)
     logger.info(f"Saved checkpoint for epoch {epoch}")
 
+
+MAX_NODES = 20000
+BATCH_SIZE = 32
+TEST_RATIO = 0.2
+
+
 def main():
     # Set random seed for reproducibility
     torch.manual_seed(42)
@@ -267,19 +273,18 @@ def main():
     if base_dir.name != "code":
         base_dir = base_dir / "code"
     data_dir = base_dir / "dataset"
-    processed_path = base_dir / "processed" / "dataloader.pt"
+    processed_path = base_dir / "processed" / f"Dataloader_max_nodes_{MAX_NODES}_batch_{BATCH_SIZE}_test_{TEST_RATIO}.pt"
 
     # Use smaller batch size
     loader = get_filtered_dataloaders(
     root_dir=data_dir,
     processed_path=processed_path,
-    batch_size=16,
-    test_ratio=0.2,
-    max_nodes=10000,    # Added filtering parameters
-    max_depth=16,
-    max_branching=10
+    batch_size=BATCH_SIZE,
+    test_ratio=TEST_RATIO,
+    max_nodes=MAX_NODES,    # Added filtering parameters
 )
     logger.info(f"Data loaded with {len(loader)} batches")
+    logger.info(f"Total number of samples: {len(loader.dataset)}")
 
     # Initialize model
     feature_dim = 10
