@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import random
 import logging
+import sys
 
 import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestRegressor
@@ -11,6 +12,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 import numpy as np
 from tqdm import tqdm
+
+repo_root = Path(__file__).resolve().parent
+dataset_creation_path = repo_root / "dataset_creation"
+sys.path.append(str(dataset_creation_path))
 
 from general_state import StateInterface, SearchNode
 
@@ -277,7 +282,7 @@ def main():
             logger.warning(f"No successful results for {benchmark_model.__name__}")
 
     # Random Forest benchmark (on all trees combined)
-    logger.info("\nRunning Random Forest benchmark...")
+    logger.info("Running Random Forest benchmark...")
     feature_names = [
         'serial_number', 'g', 'h', 'f', 'child_count',
         'h_0', 'min_h_seen', 'nodes_since_min_h',

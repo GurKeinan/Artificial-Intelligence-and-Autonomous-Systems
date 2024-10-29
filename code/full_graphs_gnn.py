@@ -47,6 +47,7 @@ Usage:
 import logging
 from pathlib import Path
 from datetime import datetime
+import sys
 from tqdm import tqdm
 import torch
 import torch.nn.functional as F
@@ -55,10 +56,10 @@ from torch_geometric.nn import GATConv, GCNConv, Linear
 from torch_geometric.nn import GraphNorm, BatchNorm
 
 
-from read_tree_search import get_filtered_dataloaders
+from prepare_full_graph_dataset import get_filtered_dataloaders
 
 # filtering constants
-MAX_NODES = 10000
+MAX_NODES = 15000
 #model constants
 HIDDEN_DIM = 256
 NUM_LAYERS = 4
@@ -74,6 +75,10 @@ EPOCHS = 100
 WARMUP_EPOCHS = 10
 BATCH_SIZE = 32
 TEST_RATIO = 0.2
+
+repo_root = Path(__file__).resolve().parent
+dataset_creation_path = repo_root / "dataset_creation"
+sys.path.append(str(dataset_creation_path))
 
 # Create logs directory if it doesn't exist
 log_dir = Path("logs")
@@ -308,8 +313,6 @@ def train_with_warmup(model, loader, optimizer, epochs, warmup_epochs=10, max_gr
                         avg_loss, scheduler.get_last_lr()[0])
 
         if epoch % 5 == 0:
-            # Save model state before evaluation
-            save_checkpoint(model, optimizer, epoch, f'checkpoint_epoch_{epoch}.pt')
             evaluate(model, loader, "Train")
             evaluate(model, loader, "Test")
 
@@ -357,34 +360,6 @@ def evaluate(model, loader, mask_type="Test"):
         logger.info('%s Average Loss: %.4f', mask_type, avg_loss)
         return avg_loss
     return None
-
-def save_checkpoint(model, optimizer, epoch, filename):
-    """
-    Saves the current state of the model and optimizer to a checkpoint file.
-    Args:
-        model (torch.nn.Module): The model to save.
-        optimizer (torch.optim.Optimizer): The optimizer to save.
-        epoch (int): The current epoch number.
-        filename (str): The name of the file to save the checkpoint to.
-    Returns:
-        None
-    """
-
-    checkpoint_dir = Path("checkpoints")
-    checkpoint_dir.mkdir(exist_ok=True)
-
-    checkpoint = {
-        'epoch': epoch,
-        'model_state_dict': model.state_dict(),
-        'optimizer_state_dict': optimizer.state_dict(),
-    }
-
-    torch.save(checkpoint, checkpoint_dir / filename)
-    logger.info("Saved checkpoint for epoch %d", epoch)
-
-
-
-
 
 def main():
     """
