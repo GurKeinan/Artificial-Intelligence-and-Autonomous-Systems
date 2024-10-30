@@ -1,11 +1,32 @@
+"""
+This script performs various benchmarks on search trees,
+including traditional benchmarks (vesp_benchmark, vasp_benchmark, pbp_benchmark)
+and a Random Forest benchmark.
+It logs the results and plots feature importance for the Random Forest model.
+
+Functions:
+    - analyze_tree(root): Analyzes a search tree for its properties.
+    - is_tree_acceptable(root, max_nodes=10000): Checks if a tree meets the criteria for inclusion.
+    - load_filtered_data(root_dir, max_nodes): Loads and filters data from a specified directory.
+    - compute_score(nodes, targets): Computes the sum of squared errors (SSE) between two arrays.
+    - vesp_benchmark(root): Recursively traverses a tree structure,
+    calculating vesp score and appending it to the nodes list.
+    - vasp_benchmark(root, window_size=50): Performs a VASP benchmark on a tree structure.
+    - pbp_benchmark(root): Performs a PBP (Progress-Based Planning) benchmark on a tree structure.
+    - collect_tree_data(root): Collects features and targets from a single tree.
+    - random_forest_benchmark(trees): Benchmarks a Random Forest model.
+    - plot_feature_importance(model, feature_names): Plots the feature importance of a given model.
+    - main(): Main function to run benchmarks on filtered search trees.
+
+Usage:
+    Run this script directly to execute the main function,
+    which performs the benchmarks and logs the results.
+"""
 from datetime import datetime
 import pickle
-import os
 from pathlib import Path
-import random
 import logging
 import sys
-
 import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
@@ -16,8 +37,6 @@ from tqdm import tqdm
 repo_root = Path(__file__).resolve().parent
 dataset_creation_path = repo_root / "dataset_creation"
 sys.path.append(str(dataset_creation_path))
-
-from general_state import StateInterface, SearchNode
 
 # Create logs directory if it doesn't exist
 log_dir = Path("logs")
@@ -53,10 +72,32 @@ def analyze_tree(root):
 def is_tree_acceptable(root, max_nodes=10000):
     """Check if a tree meets our criteria for inclusion."""
     num_nodes = analyze_tree(root)
-    logger.debug(f"Tree properties - Nodes: {num_nodes}")
-    return (num_nodes <= max_nodes)
+    return num_nodes <= max_nodes
 
-def load_filtered_data(root_dir, max_nodes=10000):
+def load_filtered_data(root_dir, max_nodes):
+    """
+    Load and filter data from a specified directory based on the complexity of the data structures.
+    This function reads all `.pkl` files from the given root directory,
+    deserializes them, and filters
+    them based on the number of nodes in the data structure.
+    Only data structures with a number of nodes
+    less than or equal to `max_nodes` are accepted.
+    Args:
+        root_dir (str or Path): The root directory containing the `.pkl` files.
+        max_nodes (int): The maximum number of nodes allowed in the data structure.
+    Returns:
+        tuple: A tuple containing two lists:
+            - data_list (list): A list of accepted data structures.
+            - name_list (list): A list of paths corresponding to the accepted data structures.
+    Raises:
+        Exception: If there is an error in processing a `.pkl` file,
+        it logs a warning and continues with the next file.
+    Logs:
+        - The datasets read from the directory.
+        - The total number of `.pkl` files found.
+        - A summary of the processing, including the number of accepted and rejected search trees.
+    """
+
     data_list = []
     name_list = []
     root_path = Path(root_dir)
@@ -65,10 +106,10 @@ def load_filtered_data(root_dir, max_nodes=10000):
     rejected_count = 0
 
     datasets = '\n'.join([str(p.as_posix()) for p in root_path.iterdir() if p.name != '.DS_Store'])
-    logger.info(f"Read Datasets:\n{datasets}")
+    logger.info("Read Datasets: \n %s", datasets)
 
     total_files = sum(1 for _ in root_path.rglob('*.pkl'))
-    logger.info(f"Found {total_files} PKL files")
+    logger.info("Found %d PKL files in the dataset.", total_files)
 
     for pkl_file in tqdm(root_path.rglob('*.pkl'), total=total_files):
         try:
@@ -80,28 +121,70 @@ def load_filtered_data(root_dir, max_nodes=10000):
                     accepted_count += 1
                 else:
                     rejected_count += 1
-        except Exception as e:
-            logger.warning(f"Failed to process {pkl_file}: {str(e)}")
+        except Exception as e: # pylint: disable=broad-except
+            logger.warning("Failed to process %s: %s", pkl_file, str(e))
             continue
 
-    logger.info(f"Processing Summary:")
-    logger.info(f"- Accepted trees: {accepted_count}")
-    logger.info(f"- Rejected trees (too complex): {rejected_count}")
+    logger.info("Processing Summary:")
+    logger.info("- Accepted trees: %d", accepted_count)
+    logger.info("- Rejected trees (too complex): %d", rejected_count)
 
     return data_list, name_list
 
-def compute_score(nodes, targets, print_res):
+def compute_score(nodes, targets):
+    """
+    Compute the sum of squared errors (SSE) between two arrays.
+    Parameters:
+    nodes (list or array-like): The first array of values.
+    targets (list or array-like): The second array of values to compare against.
+    Returns:
+    float: The sum of squared errors between the nodes and targets.
+    """
+
     nodes = np.array(nodes)
     targets = np.array(targets)
     sse = sum((nodes - targets) ** 2)
     return sse
 
-def vesp_benchmark(root, print_res=False):
+def vesp_benchmark(root,):
+
+    """
+        Recursively traverses a tree structure starting from the given node,
+        calculating a vesp value and appending it to the nodes list.
+        Args:
+            node (Node): The starting node for the traversal. Must have the following attributes:
+                - serial_number (int): A unique identifier for the node.
+                - h_0 (float): An initial heuristic value associated with the node.
+                - min_h_seen (float): The minimum heuristic value seen so far in the traversal.
+                - progress (Any): The progress value associated with the node.
+                - children (list): A list of child nodes to be traversed.
+        Side Effects:
+            - Appends calculated vesp values to the global list `nodes`.
+            - Appends node progress values to the global list `targets`.
+    """
+
     nodes = []
     targets = []
 
-    def traverse(node, parent_id=None):
-        node_id = len(targets)
+    def traverse(node):
+        """
+        Traverse a tree structure starting from the given node, calculating and
+        appending values to the nodes and targets lists.
+        The function calculates a value `vesp` based on the node's serial number,
+        initial heuristic value (h_0), and the minimum heuristic value seen (min_h_seen).
+        It then appends `vesp` to the `nodes` list and the node's progress to the
+        `targets` list. The function recursively traverses all children of the node.
+        Args:
+            node (Node): The starting node for the traversal. The node is expected
+                         to have the following attributes:
+                         - serial_number (int): The serial number of the node.
+                         - h_0 (float): The initial heuristic value of the node.
+                         - min_h_seen (float): The minimum heuristic value seen.
+                         - progress (Any): The progress value of the node.
+                         - children (list): A list of child nodes.
+        Returns:
+            None
+        """
 
         if node.serial_number == 0 or node.h_0 == node.min_h_seen:
             vesp = 0
@@ -114,19 +197,33 @@ def vesp_benchmark(root, print_res=False):
         targets.append(node.progress)
 
         for child in node.children:
-            traverse(child, parent_id=node_id)
+            traverse(child)
 
     traverse(root)
-    res = compute_score(nodes, targets, print_res)
+    res = compute_score(nodes, targets)
     return nodes, targets, res
 
-def vasp_benchmark(root, window_size=50, print_res=False):
+def vasp_benchmark(root, window_size=50):
+    """
+    Perform a VASP (Value of Average Subtree Progress) benchmark on a tree structure.
+    This function traverses a tree starting from the root node and calculates the VASP value
+    for each node based on the serial numbers of the nodes and their parents. It uses a
+    sliding window to compute the average of the differences in serial numbers.
+    Args:
+        root (Node): The root node of the tree to be traversed.
+        window_size (int, optional): The size of the sliding window for averaging. Defaults to 50.
+    Returns:
+        tuple: A tuple containing three elements:
+            - nodes (list): A list of VASP values for each node.
+            - targets (list): A list of progress values for each node.
+            - res: The result of the compute_score function applied to the nodes and targets.
+    """
+
     e_vals = []
     nodes = []
     targets = []
 
-    def traverse(node, parent_id=None):
-        node_id = len(targets)
+    def traverse(node):
 
         if node.serial_number == 0:
             vasp = 0
@@ -143,18 +240,32 @@ def vasp_benchmark(root, window_size=50, print_res=False):
         targets.append(node.progress)
 
         for child in node.children:
-            traverse(child, parent_id=node_id)
+            traverse(child)
 
     traverse(root)
-    res = compute_score(nodes, targets, print_res)
+    res = compute_score(nodes, targets)
     return nodes, targets, res
 
-def pbp_benchmark(root, print_res=False):
+def pbp_benchmark(root):
+    """
+    Perform a PBP (Progress-Based Planning) benchmark on a tree structure.
+    This function traverses a tree starting from the root node, calculates the
+    PBP value for each node, and collects the progress values. It then computes
+    a score based on the collected PBP values and progress values.
+    Args:
+        root (Node): The root node of the tree to be traversed.
+        print_res (bool, optional): If True, the result will be printed. Defaults to False.
+    Returns:
+        tuple: A tuple containing three elements:
+            - nodes (list of float): The list of PBP values for each node.
+            - targets (list of float): The list of progress values for each node.
+            - res (float): The computed score based on the nodes and targets.
+    """
+
     nodes = []
     targets = []
 
-    def traverse(node, parent_id=None):
-        node_id = len(targets)
+    def traverse(node):
 
         if node.g == 0 and node.h == 0:
             pbp = 0
@@ -164,10 +275,10 @@ def pbp_benchmark(root, print_res=False):
         targets.append(node.progress)
 
         for child in node.children:
-            traverse(child, parent_id=node_id)
+            traverse(child)
 
     traverse(root)
-    res = compute_score(nodes, targets, print_res)
+    res = compute_score(nodes, targets)
     return nodes, targets, res
 
 def collect_tree_data(root):
@@ -197,8 +308,17 @@ def collect_tree_data(root):
     traverse(root)
     return features, targets
 
-def random_forest_benchmark(trees, print_res=False):
-    """Train and evaluate random forest on all trees combined."""
+def random_forest_benchmark(trees):
+    """
+    Benchmarks a Random Forest model using data collected from a list of decision trees.
+    Parameters:
+    trees (list): A list of decision tree objects from which to collect data.
+    Returns:
+    tuple: A tuple containing the trained Random Forest model,
+    the mean squared error on the training set,
+    and the mean squared error on the test set.
+    """
+
     logger.info("Collecting data from all trees...")
     all_features = []
     all_targets = []
@@ -212,21 +332,21 @@ def random_forest_benchmark(trees, print_res=False):
     all_features = np.array(all_features)
     all_targets = np.array(all_targets)
 
-    logger.info(f"Total nodes collected: {len(all_features)}")
+    logger.info("Total nodes collected: %d", len(all_features))
 
     # Split data into train and test sets
-    X_train, X_test, y_train, y_test = train_test_split(
+    x_train, x_test, y_train, y_test = train_test_split(
         all_features, all_targets, test_size=0.2, random_state=42
     )
 
     # Train model
     logger.info("Training Random Forest model...")
     regr = RandomForestRegressor(n_estimators=100, max_depth=10, random_state=42, n_jobs=-1)
-    regr.fit(X_train, y_train)
+    regr.fit(x_train, y_train)
 
     # Evaluate
-    train_pred = regr.predict(X_train)
-    test_pred = regr.predict(X_test)
+    train_pred = regr.predict(x_train)
+    test_pred = regr.predict(x_test)
 
     train_mse = mean_squared_error(y_train, train_pred)
     test_mse = mean_squared_error(y_test, test_pred)
@@ -234,6 +354,16 @@ def random_forest_benchmark(trees, print_res=False):
     return regr, train_mse, test_mse
 
 def plot_feature_importance(model, feature_names):
+    """
+    Plots the feature importance of a given model.
+    Parameters:
+        model (object): The trained model with feature importances.
+        It should have an attribute `feature_importances_`.
+        feature_names (list of str): List of feature names used in the model.
+    Returns:
+        None
+    """
+
     importance = model.feature_importances_
     indices = np.argsort(importance)[::-1]
 
@@ -246,6 +376,21 @@ def plot_feature_importance(model, feature_names):
     plt.show()
 
 def main():
+    """
+    Main function to run benchmarks on filtered search trees.
+    This function performs the following steps:
+    1. Sets up the base directory and data directory paths.
+    2. Loads filtered data from the dataset directory.
+    3. Runs traditional benchmarks (vesp_benchmark, vasp_benchmark, pbp_benchmark) on the data.
+    4. Logs the Mean Squared Error (MSE) for each benchmark model.
+    5. Runs a Random Forest benchmark on all combined trees.
+    6. Logs the train and test MSE for the Random Forest model.
+    7. Plots the feature importance for the Random Forest model.
+    The function handles exceptions during the benchmark runs and logs warnings for any failures.
+    Raises:
+        Exception: If any error occurs during the processing of a tree with a benchmark model.
+    """
+
     base_dir = Path(__file__).resolve().parent
     if base_dir.name != "code":
         base_dir = base_dir / "code"
@@ -256,7 +401,7 @@ def main():
         root_dir=data_dir,
         max_nodes=20000
     )
-    logger.info(f"Loaded {len(data)} filtered search trees.")
+    logger.info("Loaded %d filtered search trees.", len(data))
 
     # Traditional benchmarks
     benchmark_models = [vesp_benchmark, vasp_benchmark, pbp_benchmark]
@@ -264,22 +409,23 @@ def main():
 
     for benchmark_model in benchmark_models:
         results = []
-        logger.info(f"Running {benchmark_model.__name__}...")
+        logger.info("Running %s...", benchmark_model.__name__)
 
         for tree, name in tqdm(zip(data, names), total=len(data)):
             try:
                 nodes, targets, sse = benchmark_model(tree, print_res=False)
                 results.append((nodes, targets, sse))
                 total_samples += len(nodes)
-            except Exception as e:
-                logger.warning(f"Failed to process tree {name} with {benchmark_model.__name__}: {str(e)}")
+            except Exception as e: # pylint: disable=broad-except
+                logger.warning("Failed to process tree %s with %s: %s",
+                               name, benchmark_model.__name__, str(e))
                 continue
 
         if results:
             mse = sum([r[2] for r in results]) / total_samples
-            logger.info(f"MSE for {benchmark_model.__name__}: {mse}")
+            logger.info("MSE for %s: %.4f", benchmark_model.__name__, mse)
         else:
-            logger.warning(f"No successful results for {benchmark_model.__name__}")
+            logger.warning("No successful results for %s.", benchmark_model.__name__)
 
     # Random Forest benchmark (on all trees combined)
     logger.info("Running Random Forest benchmark...")
@@ -290,8 +436,8 @@ def main():
     ]
 
     rf_model, train_mse, test_mse = random_forest_benchmark(data)
-    logger.info(f"Train MSE for Random Forest: {train_mse:.4f}")
-    logger.info(f"Test MSE for Random Forest: {test_mse:.4f}")
+    logger.info("Train MSE for Random Forest: %.4f", train_mse)
+    logger.info("Test MSE for Random Forest: %.4f", test_mse)
     plot_feature_importance(rf_model, feature_names)
 
 if __name__ == "__main__":

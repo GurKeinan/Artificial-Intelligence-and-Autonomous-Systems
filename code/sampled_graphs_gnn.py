@@ -1,16 +1,57 @@
+"""
+This script trains a Graph Neural Network (GNN) using dynamically sampled subgraphs
+from a larger graph dataset.
+It includes the following components:
+
+- Constants for filtering, sampling, model configuration, and training.
+- Logging setup to record training progress and results.
+- `DynamicSampledLoader` class to dynamically sample subgraphs during training.
+- `SampledGNN` class defining the GNN architecture.
+- `train_sampled_gnn` function to train the GNN using the dynamically sampled subgraphs.
+- `evaluate_sampled_model` function to evaluate the GNN on sampled subgraphs.
+- `main` function to load data, initialize the model, and start the training process.
+
+Classes:
+    DynamicSampledLoader: DataLoader that dynamically samples subgraphs during iteration.
+    SampledGNN: Modified GNN to handle sampled subgraphs.
+
+Functions:
+    train_sampled_gnn(model, original_loader, optimizer, epochs,
+    warmup_epochs=10, max_grad_norm=1.0):
+        Train the GNN using dynamically sampled subgraphs.
+    evaluate_sampled_model(model, loader, mask_type="Test"):
+        Evaluate the model on sampled subgraphs.
+    main():
+        Main function to load data, initialize the model, and start the training process.
+
+Constants:
+    MAX_NODES: Maximum number of nodes in a graph.
+    SAMPLES_PER_EPOCH: Total samples to generate per epoch.
+    MAX_DISTANCE: Maximum hop distance for subgraphs.
+    NUM_GNN_LAYERS: Number of GNN layers based on max distance.
+    HIDDEN_DIM: Hidden dimension size for the GNN.
+    DROPOUT: Dropout rate.
+    LAYER_NORM: Boolean indicating whether to use layer normalization.
+    RESIDUAL_FREQUENCY: Frequency of residual connections.
+    LR: Learning rate.
+    WEIGHT_DECAY: Weight decay for the optimizer.
+    EPOCHS: Number of training epochs.
+    WARMUP_EPOCHS: Number of warmup epochs for the learning rate scheduler.
+    BATCH_SIZE: Batch size for training.
+    TEST_RATIO: Ratio of the dataset to use for testing.
+"""
 import logging
+import random
 from pathlib import Path
 from datetime import datetime
 import sys
-import test
 import torch
 import torch.nn.functional as F
 from torch.optim.adamw import AdamW
-from torch_geometric.nn import GATConv, GCNConv, Linear, GraphNorm, BatchNorm
-from torch_geometric.data import Data, InMemoryDataset, DataLoader, Batch
+from torch_geometric.nn import GCNConv, Linear, GraphNorm, BatchNorm
+from torch_geometric.data import Data, Batch
 from torch_geometric.utils import k_hop_subgraph
 from tqdm import tqdm
-import random
 from prepare_full_graph_dataset import get_filtered_dataloaders
 
 # constants for filtering
@@ -24,7 +65,6 @@ NUM_GNN_LAYERS = MAX_DISTANCE + 2  # Number of GNN layers based on max distance
 # Model constants
 HIDDEN_DIM = 256
 
-HEADS = 4
 DROPOUT = 0.2
 LAYER_NORM = True
 RESIDUAL_FREQUENCY = 2
@@ -58,7 +98,23 @@ logger.addHandler(file_handler)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class DynamicSampledLoader:
-    """DataLoader that dynamically samples subgraphs during iteration"""
+    """
+    A data loader that dynamically samples subgraphs from a given dataset of graphs.
+    Attributes:
+        original_dataset (Dataset): The original dataset containing the graphs.
+        samples_per_epoch (int): The number of samples to generate per epoch.
+        max_distance (int): The maximum distance for k-hop subgraph sampling.
+        batch_size (int): The number of samples per batch.
+        shuffle (bool): Whether to shuffle the samples in each batch.
+    Methods:
+        sample_subgraph(graph):
+            Samples a single subgraph from a given graph.
+        __iter__():
+            Iterates over the dataset, yielding batches of sampled subgraphs.
+        __len__():
+            Returns the number of batches per epoch.
+    """
+
     def __init__(self, original_dataset, samples_per_epoch, max_distance,
                  batch_size, shuffle=True):
         self.original_dataset = original_dataset
@@ -71,12 +127,32 @@ class DynamicSampledLoader:
         self.dataset_indices = list(range(len(original_dataset)))
 
     def sample_subgraph(self, graph):
-        """Sample a single subgraph from a given graph"""
+        """
+        Samples a k-hop subgraph from the given graph.
+        Parameters:
+        -----------
+        graph : torch_geometric.data.Data
+            The input graph from which to sample the subgraph.
+            It is expected to have attributes `x` (node features),
+            `edge_index` (edge list), and optionally `y` (node labels), `train_mask`, `test_mask`.
+        Returns:
+        --------
+        torch_geometric.data.Data
+            A new graph object containing the sampled subgraph with the following attributes:
+            - `x`: Node features of the subgraph.
+            - `edge_index`: Edge list of the subgraph.
+            - `y`: Node labels of the subgraph (if present in the original graph).
+            - `train_mask`: Training mask for the subgraph (if present in the original graph).
+            - `test_mask`: Test mask for the subgraph (if present in the original graph).
+            - `center_node`: A tensor containing the index of the central node
+            (always 0 after relabeling).
+        """
+
         num_nodes = graph.x.size(0)
         node_idx = random.randrange(num_nodes)
 
         # Get k-hop subgraph
-        subset, edge_index, mapping, edge_mask = k_hop_subgraph(
+        subset, edge_index, _, _ = k_hop_subgraph(
             node_idx=node_idx,
             num_hops=self.max_distance,
             edge_index=graph.edge_index,
@@ -132,9 +208,36 @@ class DynamicSampledLoader:
         return (self.samples_per_epoch + self.batch_size - 1) // self.batch_size
 
 class SampledGNN(torch.nn.Module):
-    """Modified GNN to handle sampled subgraphs"""
-    def __init__(self, input_dim, hidden_dim, num_layers, heads,
-                 dropout, layer_norm, residual_frequency):
+    """
+    A Graph Neural Network (GNN) model with sampling and residual connections.
+    Args:
+        input_dim (int): Dimension of the input features.
+        hidden_dim (int): Dimension of the hidden layers.
+        num_layers (int): Number of GNN layers.
+        dropout (float): Dropout rate.
+        layer_norm (bool): Whether to use layer normalization.
+        residual_frequency (int): Frequency of residual connections.
+    Attributes:
+        num_layers (int): Number of GNN layers.
+        dropout (float): Dropout rate.
+        residual_frequency (int): Frequency of residual connections.
+        input_proj (torch.nn.Sequential): Input projection layer.
+        gcn_layers (torch.nn.ModuleList): List of GCN layers.
+        norms (torch.nn.ModuleList): List of normalization layers.
+        skip_layers (torch.nn.ModuleList): List of skip connection layers.
+        prediction_head (torch.nn.Sequential): Prediction head for node classification.
+        edge_weight (torch.nn.Parameter): Edge weight parameter.
+    Methods:
+        forward(data):
+            Forward pass of the GNN model.
+            Args:
+                data (torch_geometric.data.Data): Input data containing node features,
+                edge indices, and batch information.
+            Returns:
+                torch.Tensor: Node predictions after applying the GNN model.
+    """
+
+    def __init__(self, input_dim, hidden_dim, num_layers, dropout, layer_norm, residual_frequency):
         super().__init__()
         self.num_layers = num_layers
         self.dropout = dropout
@@ -176,6 +279,15 @@ class SampledGNN(torch.nn.Module):
         self.edge_weight = torch.nn.Parameter(torch.ones(1))
 
     def forward(self, data):
+        """
+        Perform a forward pass through the GNN model.
+        Args:
+            data (torch_geometric.data.Data): Input data containing node features,
+            edge indices, and batch information.
+        Returns:
+            torch.Tensor: The predicted node labels as a 1D tensor with values in the range [0, 1].
+        """
+
         x, edge_index, batch = data.x, data.edge_index, data.batch
 
         # Make graph bidirectional and weight edges
@@ -205,74 +317,80 @@ class SampledGNN(torch.nn.Module):
 
         return torch.sigmoid(node_predictions).view(-1)
 
-import torch
 
-def train_sampled_gnn(model, original_loader, optimizer, epochs,
-                     warmup_epochs=10, max_grad_norm=1.0):
-    """Train the GNN using dynamically sampled subgraphs"""
-    scheduler = torch.optim.lr_scheduler.OneCycleLR(
+def initialize_scheduler(optimizer, epochs, warmup_epochs, loader):
+    """
+    Initializes and returns a OneCycleLR scheduler for the given optimizer.
+    Args:
+        optimizer (torch.optim.Optimizer): The optimizer for which to schedule the learning rate.
+        epochs (int): The total number of epochs for training.
+        warmup_epochs (int): The number of epochs to warm up the learning rate.
+        loader (torch.utils.data.DataLoader): DataLoader providing the training data.
+    Returns:
+        torch.optim.lr_scheduler.OneCycleLR: The initialized learning rate scheduler.
+    """
+
+    return torch.optim.lr_scheduler.OneCycleLR(
         optimizer,
         max_lr=0.001,
         epochs=epochs,
-        steps_per_epoch=len(original_loader),
-        pct_start=warmup_epochs/epochs
+        steps_per_epoch=len(loader),
+        pct_start=warmup_epochs / epochs
     )
 
-    model = model.to(device)
-    criterion = torch.nn.MSELoss()
+def train_one_epoch(model, loader, optimizer, scheduler, criterion, max_grad_norm):
+    """
+    Trains the model for one epoch.
+    Args:
+        model (torch.nn.Module): The model to be trained.
+        loader (torch.utils.data.DataLoader): DataLoader providing the training data.
+        optimizer (torch.optim.Optimizer): Optimizer for updating the model parameters.
+        scheduler (torch.optim.lr_scheduler._LRScheduler): Learning rate scheduler.
+        criterion (torch.nn.Module): Loss function.
+        max_grad_norm (float): Maximum gradient norm for gradient clipping.
+    Returns:
+        float: The average loss over all valid batches.
+    """
 
-    # Create sampled loader
-    sampled_loader = DynamicSampledLoader(
-        original_dataset=original_loader.dataset,
-        samples_per_epoch=SAMPLES_PER_EPOCH,
-        max_distance=MAX_DISTANCE,
-        batch_size=BATCH_SIZE
-    )
+    model.train()
+    total_loss = 0
+    valid_batches = 0
 
-    best_val_loss = float('inf')
+    for batch in tqdm(loader, total=len(loader)):
+        optimizer.zero_grad()
+        batch = batch.to(device)
+        predictions = model(batch)
 
-    for epoch in range(epochs):
-        logger.info(f"Starting Epoch {epoch + 1}")
-        model.train()
-        total_loss = 0
-        valid_batches = 0
+        if hasattr(batch, 'train_mask'):
+            train_pred = predictions[batch.train_mask]
+            train_true = batch.y[batch.train_mask]
 
-        for batch in tqdm(sampled_loader, total=len(sampled_loader)):
-            optimizer.zero_grad()
+            if len(train_pred) > 0:
+                loss = criterion(train_pred, train_true)
+                loss.backward()
 
-            batch = batch.to(device)
-            predictions = model(batch)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
+                optimizer.step()
+                scheduler.step()
 
-            if hasattr(batch, 'train_mask'):
-                train_pred = predictions[batch.train_mask]
-                train_true = batch.y[batch.train_mask]
+                total_loss += loss.item()
+                valid_batches += 1
 
-                if len(train_pred) > 0:
-                    loss = criterion(train_pred, train_true)
-                    loss.backward()
-
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
-                    optimizer.step()
-                    scheduler.step()
-
-                    total_loss += loss.item()
-                    valid_batches += 1
-
-        if valid_batches > 0:
-            avg_loss = total_loss / valid_batches
-            logger.info(f'Epoch {epoch + 1}, Loss: {avg_loss:.4f}, LR: {scheduler.get_last_lr()[0]:.6f}')
-
-        if epoch % 5 == 0:
-            evaluate_sampled_model(model, sampled_loader, "Train")
-            val_loss = evaluate_sampled_model(model, sampled_loader, "Test")
-
-            if val_loss is not None and val_loss < best_val_loss:
-                best_val_loss = val_loss
-                torch.save(model.state_dict(), 'best_sample_training_model.pth')
-                logger.info(f'New best model saved with validation loss: {best_val_loss:.4f}')
+    avg_loss = total_loss / valid_batches if valid_batches > 0 else float('inf')
+    return avg_loss
 
 def evaluate_sampled_model(model, loader, mask_type="Test"):
-    """Evaluate the model on sampled subgraphs"""
+    """
+    Evaluates a sampled model on a given dataset loader.
+    Args:
+        model (torch.nn.Module): The model to be evaluated.
+        loader (torch.utils.data.DataLoader): DataLoader containing the dataset to evaluate.
+        mask_type (str, optional): Type of mask to use for evaluation.
+                                   Options are "Train", "Test", or "Full". Default is "Test".
+    Returns:
+        float or None: The average loss over the samples if there are any, otherwise None.
+    """
+
     model.eval()
     total_loss = 0
     num_samples = 0
@@ -297,13 +415,110 @@ def evaluate_sampled_model(model, loader, mask_type="Test"):
 
     if num_samples > 0:
         avg_loss = total_loss / num_samples
-        logger.info(f'{mask_type} Average Loss: {avg_loss:.4f}')
+        logger.info('%s Average Loss: %.4f', mask_type, avg_loss)
         return avg_loss
     return None
 
+def evaluate_and_save_model(model, loader, best_val_loss):
+    """
+    Evaluates the given model using the provided data loader and saves the model
+    if it achieves a new best validation loss.
+    Args:
+        model (torch.nn.Module): The model to be evaluated and potentially saved.
+        loader (torch.utils.data.DataLoader): The data loader providing the dataset for evaluation.
+        best_val_loss (float): The current best validation loss to compare against.
+    Returns:
+        float: The updated best validation loss.
+    """
+
+    evaluate_sampled_model(model, loader, "Train")
+    val_loss = evaluate_sampled_model(model, loader, "Test")
+
+    if val_loss is not None and val_loss < best_val_loss:
+        best_val_loss = val_loss
+        torch.save(model.state_dict(), 'best_sample_training_model.pth')
+        logger.info('New best model saved with validation loss: %.4f', best_val_loss)
+
+    return best_val_loss
+
+def train_sampled_gnn(model, original_loader, optimizer, epochs,
+                      warmup_epochs=10, max_grad_norm=1.0):
+    """
+    Trains a Graph Neural Network (GNN) model using dynamic sampling.
+    Args:
+        model (torch.nn.Module): The GNN model to be trained.
+        original_loader (torch.utils.data.DataLoader): DataLoader for the original dataset.
+        optimizer (torch.optim.Optimizer): Optimizer for training the model.
+        epochs (int): Number of epochs to train the model.
+        warmup_epochs (int, optional): Number of warmup epochs for the learning rate scheduler.
+        Default is 10.
+        max_grad_norm (float, optional): Maximum norm for gradient clipping. Default is 1.0.
+    Returns:
+        None
+    """
+
+    model = model.to(device)
+    criterion = torch.nn.MSELoss()
+
+    # Create sampled loader
+    sampled_loader = DynamicSampledLoader(
+        original_dataset=original_loader.dataset,
+        samples_per_epoch=SAMPLES_PER_EPOCH,
+        max_distance=MAX_DISTANCE,
+        batch_size=BATCH_SIZE
+    )
+
+    scheduler = initialize_scheduler(optimizer, epochs, warmup_epochs, sampled_loader)
+
+    best_val_loss = float('inf')
+
+    for epoch in range(epochs):
+        logger.info("Starting Epoch %d", epoch + 1)
+        avg_loss = train_one_epoch(model, sampled_loader,
+                                   optimizer, scheduler, criterion, max_grad_norm)
+        logger.info('Epoch %d, Loss: %.4f, LR: %.6f',
+                    epoch + 1, avg_loss, scheduler.get_last_lr()[0])
+
+        if epoch % 5 == 0:
+            best_val_loss = evaluate_and_save_model(model, sampled_loader, best_val_loss)
+
+
+
 def main():
+    """
+    Main function to train and evaluate a Sampled Graph Neural Network (GNN).
+    This function performs the following steps:
+    1. Sets the random seed for reproducibility.
+    2. Logs the device being used for computation.
+    3. Loads the dataset with a specified batch size.
+    4. Initializes the Sampled GNN model with specified hyperparameters.
+    5. Sets up the optimizer for training.
+    6. Trains the model using dynamic sampling.
+    7. Loads the best model from the training process.
+    8. Evaluates the best model on the entire dataset.
+    The function relies on several global constants and functions:
+    - `MAX_NODES`: Maximum number of nodes in the graph.
+    - `BATCH_SIZE`: Batch size for data loading.
+    - `TEST_RATIO`: Ratio of the dataset to be used for testing.
+    - `HIDDEN_DIM`: Dimension of the hidden layers in the GNN.
+    - `NUM_GNN_LAYERS`: Number of layers in the GNN.
+    - `DROPOUT`: Dropout rate for the GNN layers.
+    - `LAYER_NORM`: Whether to use layer normalization.
+    - `RESIDUAL_FREQUENCY`: Frequency of residual connections in the GNN.
+    - `LR`: Learning rate for the optimizer.
+    - `WEIGHT_DECAY`: Weight decay for the optimizer.
+    - `EPOCHS`: Number of training epochs.
+    - `WARMUP_EPOCHS`: Number of warmup epochs for training.
+    - `get_filtered_dataloaders`: Function to load and filter the dataset.
+    - `SampledGNN`: Class representing the Sampled GNN model.
+    - `train_sampled_gnn`: Function to train the Sampled GNN model.
+    - `evaluate_sampled_model`: Function to evaluate the trained model.
+    Returns:
+        None
+    """
+
     torch.manual_seed(42)
-    logger.info(f"Using device: {device}")
+    logger.info("Using device: %s", device)
 
     # Load data with smaller batch size
     base_dir = Path(__file__).resolve().parent
@@ -322,8 +537,10 @@ def main():
     max_nodes=MAX_NODES,
     )
 
-    logger.info(f"Original dataset loaded with {len(original_loader)} batches")
-    logger.info(f"Number of features: {original_loader.dataset.num_features}")
+    logger.info("Original dataset loaded with %d batches", len(original_loader))
+    logger.info("Number of features: %d", original_loader.dataset.num_features)
+    logger.info("Total number of nodes: %d",
+                sum(graph.num_nodes for graph in original_loader.dataset))
 
     # Initialize model
     feature_dim = original_loader.dataset.num_features
@@ -331,7 +548,6 @@ def main():
         input_dim=feature_dim,
         hidden_dim=HIDDEN_DIM,
         num_layers=NUM_GNN_LAYERS,  # Using max_distance + 2 layers
-        heads=HEADS,
         dropout=DROPOUT,
         layer_norm=LAYER_NORM,
         residual_frequency=RESIDUAL_FREQUENCY
@@ -372,5 +588,5 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except Exception as e:
-        logger.exception("Fatal error has occurred")
+    except (RuntimeError, ValueError, IOError) as e:
+        logger.exception("Fatal error has occurred: %s", e)

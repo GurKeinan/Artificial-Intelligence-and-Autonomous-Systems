@@ -73,7 +73,7 @@ WEIGHT_DECAY = 0.01
 # training constants
 EPOCHS = 100
 WARMUP_EPOCHS = 10
-BATCH_SIZE = 32
+BATCH_SIZE = 16
 TEST_RATIO = 0.2
 
 repo_root = Path(__file__).resolve().parent

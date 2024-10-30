@@ -85,7 +85,7 @@ class FilteredTreeDataset(InMemoryDataset): # pylint: disable=abstract-method
         self.test_ratio = test_ratio
         try:
             self.data, self.slices = self.load_data()
-        except Exception as e:
+        except (ValueError, RuntimeError) as e:
             logger.error("Failed to load dataset: %s", str(e))
             raise
 
@@ -111,110 +111,107 @@ class FilteredTreeDataset(InMemoryDataset): # pylint: disable=abstract-method
 
         return num_nodes <= self.max_nodes
 
-    def _process_pickle_file(self, pkl_file):
-        """Process a single pickle file and convert it to graph data"""
-        if pkl_file.stat().st_size == 0:
-            raise ValueError("Empty file")
-
-        with pkl_file.open('rb') as f:
-            tree = pickle.load(f)
-            if tree is None:
-                raise ValueError("Tree is None")
-
-            if not self.is_tree_acceptable(tree):
-                raise ValueError("Tree too complex")
-
-            graph_data = tree_to_graph(tree, self.test_ratio)
-            if graph_data is None:
-                raise ValueError("Graph conversion failed")
-
-            return graph_data
-
-    def _handle_file_error(self, pkl_file, error, failed_files):
-        """Handle and log file processing errors"""
-        error_msg = str(error)
-        logger.warning("Failed to process file %s: %s", pkl_file, error_msg)
-        failed_files.append((pkl_file, f"Process error: {error_msg}"))
-
-    def _log_processing_summary(self, accepted_count, rejected_count, failed_files):
+    def _log_processing_summary(self, failed_files):
         """Log summary of data processing results"""
-        logger.info("Processing Summary:")
-        logger.info("- Accepted trees: %d", accepted_count)
-        logger.info("- Rejected trees (too complex): %d", rejected_count)
-        logger.info("- Failed processing: %d", len(failed_files))
-
         if failed_files:
             logger.warning("Failed to process the following files:")
             for file, reason in failed_files:
                 logger.warning("  - %s: %s", file, reason)
 
+
+    def _log_datasets(self, root_path):
+        datasets = '\n'.join([str(p.as_posix()) for p in root_path.iterdir()
+                              if p.name != '.DS_Store'])
+        logger.info("Read Datasets: %s", datasets)
+
+    def _count_total_files(self, root_path):
+        total_files = sum(1 for _ in root_path.rglob('*.pkl'))
+        logger.info("Found %d PKL files", total_files)
+        return total_files
+
+    def _process_file(self, pkl_file, data_list, failed_files):
+        try:
+            if pkl_file.stat().st_size == 0:
+                self._handle_empty_file(pkl_file, failed_files)
+                return
+
+            tree = self._load_pickle_file(pkl_file, failed_files)
+            if tree is None:
+                return
+
+            if not self.is_tree_acceptable(tree):
+                logger.debug("Rejected tree from %s - too complex", pkl_file)
+                return
+
+            self._convert_tree_to_graph(pkl_file, tree, data_list, failed_files)
+
+        except (EOFError, pickle.UnpicklingError, RuntimeError) as e:
+            logger.warning("Failed to process file %s : %s", pkl_file, str(e))
+            failed_files.append((pkl_file, f"Process error: {str(e)}"))
+
+    def _handle_empty_file(self, pkl_file, failed_files):
+        logger.warning("Skipping empty file: %s", pkl_file)
+        failed_files.append((pkl_file, "Empty file"))
+
+    def _load_pickle_file(self, pkl_file, failed_files):
+        try:
+            with pkl_file.open('rb') as f:
+                return pickle.load(f)
+        except (EOFError, pickle.UnpicklingError) as e:
+            logger.warning("Failed to load corrupted pickle file %s: %s", pkl_file, str(e))
+            failed_files.append((pkl_file, f"Pickle error: {str(e)}"))
+            return None
+
+    def _convert_tree_to_graph(self, pkl_file, tree, data_list, failed_files):
+        try:
+            graph_data = tree_to_graph(tree, self.test_ratio)
+            if graph_data is not None:
+                data_list.append(graph_data)
+            else:
+                logger.warning("Skipping %s: tree_to_graph returned None", pkl_file)
+                failed_files.append((pkl_file, "Graph conversion failed"))
+        except (ValueError, TypeError, AttributeError) as e:
+            logger.warning("Failed to convert tree to graph for %s: %s", pkl_file, str(e))
+            failed_files.append((pkl_file, f"Conversion error: {str(e)}"))
+
+    def _collate_data(self, data_list):
+        try:
+            return self.collate(data_list)
+        except Exception as e:
+            logger.error("Failed to collate data: %s", e)
+            raise
+
     def load_data(self):
+        """
+        Loads data from pickle files in the specified root directory.
+        This method processes all `.pkl` files found in the root directory
+        and its subdirectories.
+        It logs the datasets, counts the total number of files,
+        and processes each file to load the data.
+        It also keeps track of the number of accepted and rejected files,
+        and logs a summary of the processing.
+        Raises:
+            ValueError: If no valid data is loaded from the dataset.
+        Returns:
+            list: A collated list of data loaded from the pickle files.
+        """
+
         data_list = []
         failed_files = []
-        accepted_count = 0
-        rejected_count = 0
         root_path = Path(self.root_dir)
 
-        datasets = '\n'.join([str(p.as_posix()) for p in root_path.iterdir() if p.name != '.DS_Store'])
-        logger.info(f"Read Datasets:\n{datasets}")
-
-        total_files = sum(1 for _ in root_path.rglob('*.pkl'))
-        logger.info(f"Found {total_files} PKL files")
+        self._log_datasets(root_path)
+        total_files = self._count_total_files(root_path)
 
         for pkl_file in tqdm(root_path.rglob('*.pkl'), total=total_files):
-            try:
-                if pkl_file.stat().st_size == 0:
-                    logger.warning(f"Skipping empty file: {pkl_file}")
-                    failed_files.append((pkl_file, "Empty file"))
-                    continue
+            self._process_file(pkl_file, data_list, failed_files)
 
-                with pkl_file.open('rb') as f:
-                    try:
-                        tree = pickle.load(f)
-                    except (EOFError, pickle.UnpicklingError) as e:
-                        logger.warning(f"Failed to load corrupted pickle file {pkl_file}: {str(e)}")
-                        failed_files.append((pkl_file, f"Pickle error: {str(e)}"))
-                        continue
-
-                    if tree is None:
-                        logger.warning(f"Skipping {pkl_file}: Tree is None")
-                        failed_files.append((pkl_file, "Tree is None"))
-                        continue
-
-                    # Check if tree meets our criteria
-                    if not self.is_tree_acceptable(tree):
-                        rejected_count += 1
-                        logger.debug(f"Rejected tree from {pkl_file} - too complex")
-                        continue
-
-                    try:
-                        graph_data = tree_to_graph(tree, self.test_ratio)
-                        if graph_data is not None:
-                            data_list.append(graph_data)
-                            accepted_count += 1
-                        else:
-                            logger.warning(f"Skipping {pkl_file}: tree_to_graph returned None")
-                            failed_files.append((pkl_file, "Graph conversion failed"))
-                    except Exception as e:
-                        logger.warning(f"Failed to convert tree to graph for {pkl_file}: {str(e)}")
-                        failed_files.append((pkl_file, f"Conversion error: {str(e)}"))
-                        continue
-
-            except Exception as e:
-                logger.warning(f"Failed to process file {pkl_file}: {str(e)}")
-                failed_files.append((pkl_file, f"Process error: {str(e)}"))
-                continue
-
-        self._log_processing_summary(accepted_count, rejected_count, failed_files)
 
         if not data_list:
             raise ValueError("No valid data was loaded from the dataset")
 
-        try:
-            return self.collate(data_list)
-        except Exception as e:
-            logger.error(f"Failed to collate data: {str(e)}")
-            raise
+        return self._collate_data(data_list)
+
 
 
 def tree_to_graph(root, test_ratio=0.2):
