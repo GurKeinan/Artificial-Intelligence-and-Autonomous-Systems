@@ -54,9 +54,10 @@ import torch.nn.functional as F
 from torch.optim.adamw import AdamW
 from torch_geometric.nn import GATConv, GCNConv, Linear
 from torch_geometric.nn import GraphNorm, BatchNorm
+from xgboost import train
 
 
-from prepare_full_graph_dataset import get_filtered_dataloaders
+from prepare_full_graph_dataset import get_filtered_dataloaders, SerializableDataLoader
 
 # filtering constants
 MAX_NODES = 15000
@@ -249,87 +250,79 @@ class FullGraphsGNN(torch.nn.Module):
 
         return torch.sigmoid(node_predictions).view(-1)
 
-def train_with_warmup(model, loader, optimizer, epochs, warmup_epochs=10, max_grad_norm=1.0):
+def train_with_warmup(
+    model,
+    train_loader,
+    test_loader,
+    optimizer,
+    epochs,
+    warmup_epochs=10,
+    max_grad_norm=1.0,
+    patience=10,
+    eval_every=5
+):
     """
-    Train a model with a learning rate warmup phase.
-    Args:
-        model (torch.nn.Module): The neural network model to be trained.
-        loader (torch.utils.data.DataLoader): DataLoader providing the training data.
-        optimizer (torch.optim.Optimizer): Optimizer for updating model parameters.
-        epochs (int): Total number of training epochs.
-        warmup_epochs (int, optional): Number of epochs for learning rate warmup. Default is 10.
-        max_grad_norm (float, optional): Maximum norm for gradient clipping. Default is 1.0.
-    Returns:
-        None
+    Train model with warmup using separate train/test loaders and early stopping.
     """
-
+    model = model.to(device)
+    criterion = torch.nn.MSELoss()
 
     scheduler = torch.optim.lr_scheduler.OneCycleLR(
         optimizer,
         max_lr=0.001,
         epochs=epochs,
-        steps_per_epoch=len(loader),
+        steps_per_epoch=len(train_loader),
         pct_start=warmup_epochs/epochs
     )
 
-    model = model.to(device)
-    criterion = torch.nn.MSELoss()
+    best_loss = float('inf')
+    patience_counter = 0
 
     for epoch in range(epochs):
-        logger.info("Starting Epoch %d", epoch + 1)
-
+        # Training phase
         model.train()
-        total_loss = 0
-        valid_batches = 0
-
-        for batch in tqdm(loader, total=len(loader)):
-            optimizer.zero_grad()  # Zero gradients at start of each batch
-
+        epoch_loss = 0
+        for batch in tqdm(train_loader, desc=f'Epoch {epoch+1}/{epochs}'):
             batch = batch.to(device)
+            optimizer.zero_grad()
+
             predictions = model(batch)
+            loss = criterion(predictions, batch.y)
 
-            if hasattr(batch, 'train_mask'):
-                train_pred = predictions[batch.train_mask]
-                train_true = batch.y[batch.train_mask]
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
+            optimizer.step()
+            scheduler.step()
 
-                if len(train_pred) > 0:
-                    loss = criterion(train_pred, train_true)
-                    loss.backward()
+            epoch_loss += loss.item()
 
-                    # Gradient clipping
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
+        avg_train_loss = epoch_loss / len(train_loader)
 
-                    # Immediate optimizer step
-                    optimizer.step()
-                    scheduler.step()
+        # Validation phase
+        if epoch % eval_every == 0:
+            val_loss = evaluate(model, test_loader, "Test")
 
-                    # Store loss value
-                    total_loss += loss.item()
-                    valid_batches += 1
+            logger.info(f'Epoch {epoch+1}: Train Loss = {avg_train_loss:.4f}, '
+                       f'Val Loss = {val_loss:.4f}, '
+                       f'LR = {scheduler.get_last_lr()[0]:.6f}')
 
-        if valid_batches > 0:
-            avg_loss = total_loss / valid_batches
-            logger.info('Epoch %d, Loss: %.4f, LR: %.6f', epoch + 1,
-                        avg_loss, scheduler.get_last_lr()[0])
+            # Early stopping
+            if val_loss < best_loss:
+                best_loss = val_loss
+                patience_counter = 0
+                torch.save(model.state_dict(), 'best_model.pt')
+            else:
+                patience_counter += 1
+                if patience_counter >= patience:
+                    logger.info(f'Early stopping triggered after {epoch+1} epochs')
+                    break
+        else:
+            logger.info(f'Epoch {epoch+1}: Train Loss = {avg_train_loss:.4f}, '
+                       f'LR = {scheduler.get_last_lr()[0]:.6f}')
 
-        if epoch % 5 == 0:
-            evaluate(model, loader, "Train")
-            evaluate(model, loader, "Test")
 
-def evaluate(model, loader, mask_type="Test"):
-    """
-    Evaluate the performance of a model on a given dataset.
-    Args:
-        model (torch.nn.Module): The model to evaluate.
-        loader (torch.utils.data.DataLoader): DataLoader providing the dataset.
-        mask_type (str, optional): Type of mask to use for evaluation.
-                                   Options are "Train", "Test", or "Full".
-                                   Defaults to "Test".
-    Returns:
-        float or None: The average loss over the evaluated samples if any samples
-                       are evaluated, otherwise None.
-    """
 
+def evaluate(model, loader, mask_type):
 
     model.eval()
     total_loss = 0
@@ -340,26 +333,13 @@ def evaluate(model, loader, mask_type="Test"):
         for batch in loader:
             batch = batch.to(device)
             predictions = model(batch)
+            loss = criterion(predictions, batch.y)
+            total_loss += loss.item() * len(batch.y) # get sse (sum of squared errors) for the batch
+            num_samples += len(batch.y)
 
-            if mask_type == "Train":
-                mask = batch.train_mask
-            elif mask_type == "Test":
-                mask = batch.test_mask
-            else:  # "Full"
-                mask = torch.ones_like(batch.train_mask)
-
-            if mask.sum() > 0:
-                loss = criterion(predictions[mask], batch.y[mask])
-                total_loss += loss.item() * mask.sum()
-                num_samples += mask.sum()
-
-
-
-    if num_samples > 0:
-        avg_loss = total_loss / num_samples
-        logger.info('%s Average Loss: %.4f', mask_type, avg_loss)
-        return avg_loss
-    return None
+    avg_loss = total_loss / num_samples # calculate mse as the sse (sum over all samples) divided by the number of samples
+    logger.info('%s Average Loss: %.4f', mask_type, avg_loss)
+    return avg_loss
 
 def main():
     """
@@ -399,20 +379,46 @@ def main():
         / f"Dataloader_max_nodes_{MAX_NODES}_batch_{BATCH_SIZE}_test_{TEST_RATIO}.pt"
 
     # Use smaller batch size
-    loader = get_filtered_dataloaders(
+    full_loader = get_filtered_dataloaders(
     root_dir=data_dir,
     processed_path=processed_path,
     batch_size=BATCH_SIZE,
     test_ratio=TEST_RATIO,
     max_nodes=MAX_NODES,    # Added filtering parameters
-)
-    logger.info("Data loaded with %d batches", len(loader))
-    logger.info("Total number of graphs: %d", len(loader.dataset))
-    logger.info("Number of features: %d", loader.dataset.num_features)
-    logger.info("Total number of nodes: %d", sum(graph.num_nodes for graph in loader.dataset))
+    )
 
-    # Initialize model
-    feature_dim = loader.dataset.num_features
+    # Get the dataset from the full loader
+    dataset = full_loader.dataset
+
+    # Calculate split sizes
+    train_size = int((1 - TEST_RATIO) * len(dataset))
+    test_size = len(dataset) - train_size
+
+    # Split dataset
+    train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size],generator=torch.Generator().manual_seed(42))
+
+    # Create separate loaders
+    train_loader = SerializableDataLoader(
+                train_dataset,
+                batch_size=BATCH_SIZE,
+                shuffle=True
+                )
+
+    test_loader = SerializableDataLoader(
+                test_dataset,
+                batch_size=BATCH_SIZE,
+                shuffle=False
+                )
+    feature_dim = full_loader.dataset.num_features
+
+    # logs
+    logger.info("Training dataset loaded with %d batches", len(train_loader))
+    logger.info("Evaluation dataset loaded with %d batches", len(test_loader))
+    logger.info("Feature dimension: %d", feature_dim)
+    logger.info("Total nodes in full dataset: %d", sum([data.num_nodes for data in full_loader.dataset]))
+    logger.info("Total nodes in training dataset: %d", sum([data.num_nodes for data in train_loader.dataset]))
+    logger.info("Total nodes in evaluation dataset: %d", sum([data.num_nodes for data in test_loader.dataset]))
+
     model = FullGraphsGNN(
         input_dim=feature_dim,
         hidden_dim=HIDDEN_DIM,
@@ -434,7 +440,8 @@ def main():
     logger.info("Starting training...")
     train_with_warmup(
         model,
-        loader,
+        train_loader,
+        test_loader,
         optimizer,
         epochs=EPOCHS,
         warmup_epochs=WARMUP_EPOCHS
