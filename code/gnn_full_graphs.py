@@ -67,7 +67,7 @@ RESIDUAL_FREQUENCY = 2
 LR = 0.001
 WEIGHT_DECAY = 0.01
 # training constants
-EPOCHS = 100
+EPOCHS = 50
 WARMUP_EPOCHS = 10
 BATCH_SIZE = 16
 TEST_RATIO = 0.2
@@ -167,7 +167,7 @@ def train_with_warmup(
 
 
 def evaluate(model, loader, mask_type):
-
+    """ Evaluate the model on a given dataset """
     model.eval()
     total_loss = 0
     num_samples = 0
@@ -181,7 +181,8 @@ def evaluate(model, loader, mask_type):
             total_loss += loss.item() * len(batch.y) # get sse (sum of squared errors) for the batch
             num_samples += len(batch.y)
 
-    avg_loss = total_loss / num_samples # calculate mse as the sse (sum over all samples) divided by the number of samples
+    # calculate mse as the sse (sum over all samples) divided by the number of samples
+    avg_loss = total_loss / num_samples
     logger.info('%s Average Loss: %.4f', mask_type, avg_loss)
     return avg_loss
 
