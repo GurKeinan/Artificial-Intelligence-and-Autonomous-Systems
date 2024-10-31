@@ -8,4 +8,4 @@ __pycache__
 code/logs/
 *.pkl
 *.xml
-code/processed/Dataloader*.pt
+code/processed/
