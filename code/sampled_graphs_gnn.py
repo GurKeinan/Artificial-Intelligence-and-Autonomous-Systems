@@ -6,14 +6,14 @@ It includes the following components:
 - Constants for filtering, sampling, model configuration, and training.
 - Logging setup to record training progress and results.
 - `DynamicSampledLoader` class to dynamically sample subgraphs during training.
-- `SampledGNN` class defining the GNN architecture.
+- `SampleGNN` class defining the GNN architecture.
 - `train_sampled_gnn` function to train the GNN using the dynamically sampled subgraphs.
 - `evaluate_sampled_model` function to evaluate the GNN on sampled subgraphs.
 - `main` function to load data, initialize the model, and start the training process.
 
 Classes:
     DynamicSampledLoader: DataLoader that dynamically samples subgraphs during iteration.
-    SampledGNN: Modified GNN to handle sampled subgraphs.
+    SampleGNN: Modified GNN to handle sampled subgraphs.
 
 Functions:
     train_sampled_gnn(model, original_loader, optimizer, epochs,
@@ -46,13 +46,12 @@ from pathlib import Path
 from datetime import datetime
 import sys
 import torch
-import torch.nn.functional as F
 from torch.optim.adamw import AdamW
-from torch_geometric.nn import GCNConv, Linear, GraphNorm, BatchNorm
 from torch_geometric.data import Data, Batch
 from torch_geometric.utils import k_hop_subgraph
 from tqdm import tqdm
 from prepare_full_graph_dataset import get_filtered_dataloaders
+from GNNs import SampleGNN
 
 # constants for filtering
 MAX_NODES = 10000  # Maximum number of nodes in a graph
@@ -206,117 +205,6 @@ class DynamicSampledLoader:
 
     def __len__(self):
         return (self.samples_per_epoch + self.batch_size - 1) // self.batch_size
-
-class SampledGNN(torch.nn.Module):
-    """
-    A Graph Neural Network (GNN) model with sampling and residual connections.
-    Args:
-        input_dim (int): Dimension of the input features.
-        hidden_dim (int): Dimension of the hidden layers.
-        num_layers (int): Number of GNN layers.
-        dropout (float): Dropout rate.
-        layer_norm (bool): Whether to use layer normalization.
-        residual_frequency (int): Frequency of residual connections.
-    Attributes:
-        num_layers (int): Number of GNN layers.
-        dropout (float): Dropout rate.
-        residual_frequency (int): Frequency of residual connections.
-        input_proj (torch.nn.Sequential): Input projection layer.
-        gcn_layers (torch.nn.ModuleList): List of GCN layers.
-        norms (torch.nn.ModuleList): List of normalization layers.
-        skip_layers (torch.nn.ModuleList): List of skip connection layers.
-        prediction_head (torch.nn.Sequential): Prediction head for node classification.
-        edge_weight (torch.nn.Parameter): Edge weight parameter.
-    Methods:
-        forward(data):
-            Forward pass of the GNN model.
-            Args:
-                data (torch_geometric.data.Data): Input data containing node features,
-                edge indices, and batch information.
-            Returns:
-                torch.Tensor: Node predictions after applying the GNN model.
-    """
-
-    def __init__(self, input_dim, hidden_dim, num_layers, dropout, layer_norm, residual_frequency):
-        super().__init__()
-        self.num_layers = num_layers
-        self.dropout = dropout
-        self.residual_frequency = residual_frequency
-
-        # Input projection
-        self.input_proj = torch.nn.Sequential(
-            Linear(input_dim, hidden_dim),
-            torch.nn.ReLU(),
-            Linear(hidden_dim, hidden_dim)
-        )
-
-        # GNN layers
-        self.gcn_layers = torch.nn.ModuleList()
-        self.norms = torch.nn.ModuleList()
-        self.skip_layers = torch.nn.ModuleList()
-
-        for _ in range(num_layers):
-            self.gcn_layers.append(GCNConv(
-                hidden_dim,
-                hidden_dim,
-                improved=True
-            ))
-
-            self.norms.append(GraphNorm(hidden_dim) if layer_norm else BatchNorm(hidden_dim))
-            self.skip_layers.append(Linear(hidden_dim, hidden_dim))
-
-        # Prediction head
-        self.prediction_head = torch.nn.Sequential(
-            Linear(hidden_dim, hidden_dim),
-            torch.nn.ReLU(),
-            torch.nn.Dropout(dropout),
-            Linear(hidden_dim, hidden_dim // 2),
-            torch.nn.ReLU(),
-            torch.nn.Dropout(dropout),
-            Linear(hidden_dim // 2, 1)
-        )
-
-        self.edge_weight = torch.nn.Parameter(torch.ones(1))
-
-    def forward(self, data):
-        """
-        Perform a forward pass through the GNN model.
-        Args:
-            data (torch_geometric.data.Data): Input data containing node features,
-            edge indices, and batch information.
-        Returns:
-            torch.Tensor: The predicted node labels as a 1D tensor with values in the range [0, 1].
-        """
-
-        x, edge_index, batch = data.x, data.edge_index, data.batch
-
-        # Make graph bidirectional and weight edges
-        edge_index = torch.cat([edge_index, edge_index.flip(0)], dim=1)
-        edge_weight = self.edge_weight * torch.ones(edge_index.size(1), device=edge_index.device)
-
-        # Initial feature projection
-        x = self.input_proj(x)
-
-        # Multi-scale feature extraction
-        for i in range(self.num_layers):
-            prev_x = x
-
-            gcn_out = self.gcn_layers[i](x, edge_index, edge_weight)
-
-            x = gcn_out
-            x = self.norms[i](x, batch)
-            x = F.elu(x)
-            x = F.dropout(x, p=self.dropout, training=self.training)
-
-            if i % self.residual_frequency == 0:
-                skip = self.skip_layers[i](prev_x)
-                x = x + skip
-
-        # Get predictions
-        node_predictions = self.prediction_head(x)
-
-        return torch.sigmoid(node_predictions).view(-1)
-
 
 def initialize_scheduler(optimizer, epochs, warmup_epochs, loader):
     """
@@ -510,7 +398,7 @@ def main():
     - `EPOCHS`: Number of training epochs.
     - `WARMUP_EPOCHS`: Number of warmup epochs for training.
     - `get_filtered_dataloaders`: Function to load and filter the dataset.
-    - `SampledGNN`: Class representing the Sampled GNN model.
+    - `SampleGNN`: Class representing the Sampled GNN model.
     - `train_sampled_gnn`: Function to train the Sampled GNN model.
     - `evaluate_sampled_model`: Function to evaluate the trained model.
     Returns:
@@ -544,7 +432,7 @@ def main():
 
     # Initialize model
     feature_dim = original_loader.dataset.num_features
-    model = SampledGNN(
+    model = SampleGNN(
         input_dim=feature_dim,
         hidden_dim=HIDDEN_DIM,
         num_layers=NUM_GNN_LAYERS,  # Using max_distance + 2 layers

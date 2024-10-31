@@ -7,10 +7,9 @@ import shutil
 import sys
 from tqdm import tqdm
 import torch
-import torch.nn.functional as F
 from torch.optim.adamw import AdamW
-from torch_geometric.nn import GATConv, GCNConv, Linear, GraphNorm, BatchNorm
-from prepare_full_graph_dataset import get_filtered_dataloaders, FilteredTreeDataset, SerializableDataLoader, load_processed_data, save_processed_data
+from prepare_full_graph_dataset import FilteredTreeDataset, SerializableDataLoader, load_processed_data, save_processed_data
+from GNNs import FullGraphsGNN
 
 # Constants
 MAX_NODES = 15000
@@ -48,63 +47,6 @@ logger.setLevel(logging.INFO)
 logger.addHandler(file_handler)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-class FullGraphsGNN(torch.nn.Module):
-    def __init__(self, input_dim, hidden_dim=256, num_layers=4, heads=4, dropout=0.2, layer_norm=True, residual_frequency=2):
-        super(FullGraphsGNN, self).__init__()
-        self.num_layers = num_layers
-        self.dropout = dropout
-        self.residual_frequency = residual_frequency
-
-        self.input_proj = torch.nn.Sequential(
-            Linear(input_dim, hidden_dim),
-            torch.nn.ReLU(),
-            Linear(hidden_dim, hidden_dim)
-        )
-
-        self.gat_layers = torch.nn.ModuleList()
-        self.gcn_layers = torch.nn.ModuleList()
-        self.norms = torch.nn.ModuleList()
-        self.skip_layers = torch.nn.ModuleList()
-
-        for _ in range(num_layers):
-            self.gat_layers.append(GATConv(hidden_dim, hidden_dim // heads, heads=heads, dropout=dropout))
-            self.gcn_layers.append(GCNConv(hidden_dim, hidden_dim, improved=True))
-            self.norms.append(GraphNorm(hidden_dim) if layer_norm else BatchNorm(hidden_dim))
-            self.skip_layers.append(Linear(hidden_dim, hidden_dim))
-
-        self.prediction_head = torch.nn.Sequential(
-            Linear(hidden_dim, hidden_dim),
-            torch.nn.ReLU(),
-            torch.nn.Dropout(dropout),
-            Linear(hidden_dim, hidden_dim // 2),
-            torch.nn.ReLU(),
-            torch.nn.Dropout(dropout),
-            Linear(hidden_dim // 2, 1)
-        )
-
-        self.edge_weight = torch.nn.Parameter(torch.ones(1))
-
-    def forward(self, data):
-        x, edge_index, batch = data.x, data.edge_index, data.batch
-        edge_index = torch.cat([edge_index, edge_index.flip(0)], dim=1)
-        edge_weight = self.edge_weight * torch.ones(edge_index.size(1), device=edge_index.device)
-        x = self.input_proj(x)
-
-        for i in range(self.num_layers):
-            prev_x = x
-            gat_out = self.gat_layers[i](x, edge_index)
-            gcn_out = self.gcn_layers[i](x, edge_index, edge_weight)
-            x = gat_out + gcn_out
-            x = self.norms[i](x, batch)
-            x = F.elu(x)
-            x = F.dropout(x, p=self.dropout, training=self.training)
-            if i % self.residual_frequency == 0:
-                skip = self.skip_layers[i](prev_x)
-                x = x + skip
-
-        node_predictions = self.prediction_head(x)
-        return torch.sigmoid(node_predictions).view(-1)
 
 def train_with_warmup(model, loader, optimizer, epochs, warmup_epochs=10, max_grad_norm=1.0):
     scheduler = torch.optim.lr_scheduler.OneCycleLR(
