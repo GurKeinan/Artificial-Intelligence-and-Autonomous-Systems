@@ -51,7 +51,7 @@ from torch_geometric.data import Data, Batch
 from torch_geometric.utils import k_hop_subgraph
 from tqdm import tqdm
 from prepare_full_graph_dataset import get_filtered_dataloaders
-from GNNs import SampleGNN
+from gnns import SampleGNN
 
 # constants for filtering
 MAX_NODES = 10000  # Maximum number of nodes in a graph

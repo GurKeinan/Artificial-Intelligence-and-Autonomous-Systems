@@ -51,8 +51,7 @@ import sys
 from tqdm import tqdm
 import torch
 from torch.optim.adamw import AdamW
-from GNNs import FullGraphsGNN
-
+from gnns import FullGraphsGNN
 from prepare_full_graph_dataset import get_filtered_dataloaders, SerializableDataLoader
 
 # filtering constants

@@ -1,8 +1,14 @@
-from typing import List, Tuple, Set, Dict
+from typing import List, Tuple, Set
 from collections import namedtuple
-
 from sliding_puzzle_generator import SlidingPuzzleState
 
+def find_tile_location(board: List[List[int]], tile: int) -> Tuple[int, int]:
+    """Return the location of the given tile in the board."""
+    for i, row in enumerate(board):
+        for j, value in enumerate(row):
+            if value == tile:
+                return i, j
+    raise ValueError(f'Tile {tile} not found in the board')
 
 def sp_manhattan_distance(state: SlidingPuzzleState, goal: SlidingPuzzleState) -> int:
     """
@@ -14,17 +20,9 @@ def sp_manhattan_distance(state: SlidingPuzzleState, goal: SlidingPuzzleState) -
         for j in range(state.size):
             tile = state.board[i][j]
             if tile != 0:  # Ignore the empty tile
-                goal_i, goal_j = None, None
-                for x in range(goal.size):
-                    for y in range(goal.size):
-                        if goal.board[x][y] == tile:
-                            goal_i, goal_j = x, y
-                            break
-                    if goal_i is not None:
-                        break
+                goal_i, goal_j = find_tile_location(goal.board, tile)
                 distance += abs(i - goal_i) + abs(j - goal_j)
     return distance
-
 
 def sp_misplaced_tiles(state: SlidingPuzzleState, goal: SlidingPuzzleState) -> int:
     """
@@ -40,6 +38,24 @@ Action = namedtuple('Action', ['tile', 'before_x', 'before_y', 'after_x', 'after
 
 
 class SlidingPuzzlePlanningProblem:
+    """
+    A class to represent a planning problem for a sliding puzzle.
+    Attributes:
+    -----------
+    initial_state : SlidingPuzzleState
+        The initial state of the sliding puzzle.
+    goal_state : SlidingPuzzleState
+        The goal state of the sliding puzzle.
+    size : int
+        The size of the sliding puzzle (number of rows/columns).
+    Methods:
+    --------
+    get_propositions(state: SlidingPuzzleState) -> Set[Tuple[int, int, int]]:
+        Return a set of propositions representing the current state.
+    get_goal_propositions() -> Set[Tuple[int, int, int]]:
+        Return a set of propositions representing the goal state.
+    """
+
     def __init__(self, initial_state: SlidingPuzzleState, goal_state: SlidingPuzzleState):
         self.initial_state = initial_state
         self.goal_state = goal_state
@@ -78,7 +94,7 @@ def build_relaxed_planning_graph(problem: SlidingPuzzlePlanningProblem) -> Tuple
             if zero_tile == 0:
                 for tile, i, j in props:
                     if (i == x and abs(j - y) == 1) or (j == y and abs(i - x) == 1):
-                        new_actions.add(Action(tile, i, j, x, y))
+                        new_actions.add(Action(tile, i, j, x, y)) # type: ignore
                         new_props.add(Proposition(tile, x, y))
                         new_props.add(Proposition(0, i, j))
 

@@ -1,3 +1,5 @@
+""" Graph Neural Network models for search progress prediction. """
+
 import torch
 import torch.nn.functional as F
 from torch.nn import Linear

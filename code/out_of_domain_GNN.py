@@ -1,4 +1,42 @@
+"""
+out_of_domain_GNN.py
 
+This module trains and evaluates Graph Neural Networks (GNNs) on out-of-domain datasets. The goal is to assess the
+generalization capability of GNNs when applied to datasets that differ from the training data.
+
+Modules and Libraries:
+- logging: For logging the training and evaluation process.
+- pathlib: For handling file paths.
+- datetime: For timestamping logs and outputs.
+- shutil: For file operations.
+- sys: For system-specific parameters and functions.
+- tqdm: For displaying progress bars.
+- torch: For PyTorch operations.
+- torch.optim.adamw: For the AdamW optimizer.
+- prepare_full_graph_dataset: For dataset preparation and loading.
+- GNNs: For defining the GNN models.
+
+Constants:
+- MAX_NODES: Maximum number of nodes in a graph.
+- HIDDEN_DIM: Dimension of hidden layers in the GNN.
+- NUM_LAYERS: Number of layers in the GNN.
+- HEADS: Number of attention heads in the GNN.
+- DROPOUT: Dropout rate for regularization.
+- LAYER_NORM: Whether to use layer normalization.
+- RESIDUAL_FREQUENCY: Frequency of residual connections.
+- LR: Learning rate for the optimizer.
+- WEIGHT_DECAY: Weight decay for the optimizer.
+- EPOCHS: Number of training epochs.
+- WARMUP_EPOCHS: Number of warmup epochs.
+- BATCH_SIZE: Batch size for training.
+
+Functions:
+- train_with_warmup: Trains the model with a warmup learning rate schedule.
+- evaluate: Evaluates the model on the provided data loader.
+- filter_files_by_prefix: Filters files by prefix in the root directory.
+- get_filtered_dataloaders_by_prefix: Gets DataLoader from processed path if it exists, otherwise creates a new DataLoader.
+- main: Main function to set up and train a Graph Neural Network (GNN) model.
+"""
 
 import logging
 from pathlib import Path
@@ -8,8 +46,9 @@ import sys
 from tqdm import tqdm
 import torch
 from torch.optim.adamw import AdamW
-from prepare_full_graph_dataset import FilteredTreeDataset, SerializableDataLoader, load_processed_data, save_processed_data
-from GNNs import FullGraphsGNN
+from prepare_full_graph_dataset import FilteredTreeDataset, SerializableDataLoader,\
+                                        load_processed_data, save_processed_data
+from gnns import FullGraphsGNN
 
 # Constants
 MAX_NODES = 15000
@@ -49,6 +88,19 @@ logger.addHandler(file_handler)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def train_with_warmup(model, loader, optimizer, epochs, warmup_epochs=10, max_grad_norm=1.0):
+    """
+    Trains the model with a warmup learning rate schedule.
+
+    Args:
+        model (torch.nn.Module): The model to train.
+        loader (torch.utils.data.DataLoader): The data loader containing the training data.
+        optimizer (torch.optim.Optimizer): The optimizer to use for training.
+        epochs (int): The number of epochs to train for.
+        warmup_epochs (int, optional): The number of epochs to warm up the learning rate.
+        Defaults to 10.
+        max_grad_norm (float, optional): The maximum gradient norm for gradient clipping.
+        Defaults to 1.0.
+    """
     scheduler = torch.optim.lr_scheduler.OneCycleLR(
         optimizer,
         max_lr=0.001,
@@ -80,13 +132,24 @@ def train_with_warmup(model, loader, optimizer, epochs, warmup_epochs=10, max_gr
 
         if valid_batches > 0:
             avg_loss = total_loss / valid_batches
-            logger.info('Epoch %d, Loss: %.4f, LR: %.6f', epoch + 1, avg_loss, scheduler.get_last_lr()[0])
+            logger.info('Epoch %d, Loss: %.4f, LR: %.6f',
+                        epoch + 1, avg_loss, scheduler.get_last_lr()[0])
 
         if epoch % 5 == 0:
             # evaluate(model, loader, "Train")
             evaluate(model, loader)
 
 def evaluate(model, loader):
+    """
+    Evaluates the model on the provided data loader.
+
+    Args:
+        model (torch.nn.Module): The model to evaluate.
+        loader (torch.utils.data.DataLoader): The data loader containing the evaluation data.
+
+    Returns:
+        float: The average loss over the evaluation dataset.
+    """
     model.eval()
     total_loss = 0
     num_samples = 0
@@ -100,18 +163,6 @@ def evaluate(model, loader):
             total_loss += loss.item() * len(batch.y)
             num_samples += len(batch.y)
 
-            # if mask_type == "Train":
-            #     mask = batch.train_mask
-            # elif mask_type == "Test":
-            #     mask = batch.test_mask
-            # else:
-            #     mask = torch.ones_like(batch.train_mask)
-
-            # if mask.sum() > 0:
-            #     loss = criterion(predictions[mask], batch.y[mask])
-            #     total_loss += loss.item() * mask.sum()
-            #     num_samples += mask.sum()
-
     if num_samples > 0:
         avg_loss = total_loss / num_samples
         logger.info('Evaluation average Loss: %.4f', avg_loss)
@@ -119,6 +170,7 @@ def evaluate(model, loader):
     return None
 
 def filter_files_by_prefix(root_dir, prefix):
+    """ Filter files by prefix in the root directory """
     root_path = Path(root_dir)
     filtered_files = []
     for dir_path in root_path.iterdir():
@@ -126,7 +178,9 @@ def filter_files_by_prefix(root_dir, prefix):
             filtered_files.extend([str(p) for p in dir_path.rglob('*.pkl')])
     return filtered_files
 
-def get_filtered_dataloaders_by_prefix(root_dir, processed_path, prefix, batch_size=32, test_ratio=0.2, max_nodes=1000):
+def get_filtered_dataloaders_by_prefix(root_dir, processed_path, prefix,
+                                       batch_size=32, test_ratio=0.2, max_nodes=1000):
+    """ Get DataLoader from processed path if it exists, otherwise create a new DataLoader """
     if processed_path and Path(processed_path).exists():
         logger.info("Loading DataLoader from %s", processed_path)
         loader = load_processed_data(processed_path)
@@ -152,9 +206,22 @@ def get_filtered_dataloaders_by_prefix(root_dir, processed_path, prefix, batch_s
         shutil.rmtree(filtered_files_path)
         return loader
 
-
-
 def main():
+    """
+    Main function to set up and train a Graph Neural Network (GNN) model.
+
+    This function performs the following steps:
+    1. Sets the random seed for reproducibility.
+    2. Logs the device being used for computation.
+    3. Determines the base directory and dataset directory.
+    4. Loads the training and evaluation datasets using filtered dataloaders.
+    5. Logs the number of batches in the training and evaluation datasets.
+    6. Initializes the GNN model with specified hyperparameters.
+    7. Sets up the optimizer for training.
+    8. Trains the model using a warmup strategy.
+    9. Evaluates the trained model on the evaluation dataset.
+    """
+
     torch.manual_seed(42)
     logger.info("Using device: %s", device)
 

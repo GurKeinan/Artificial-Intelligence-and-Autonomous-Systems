@@ -1,10 +1,36 @@
+""" A module for generating random sliding puzzle problems. """
+
 import random
 from typing import List, Tuple, Optional
-
 from general_state import StateInterface
 
 
 class SlidingPuzzleState(StateInterface):
+    """
+    A class representing the state of a sliding puzzle.
+    Attributes:
+        size (int): The size of the puzzle (e.g., 3 for a 3x3 puzzle).
+        board (List[List[int]]): The current state of the puzzle board.
+    Methods:
+        __init__(size: int, board: Optional[List[List[int]]] = None):
+            Initializes the SlidingPuzzleState with a given size and optional board.
+        _generate_random_board() -> List[List[int]]:
+            Generates a random board configuration for the puzzle.
+        get_empty_position() -> Tuple[int, int]:
+            Returns the position (row, col) of the empty space (0) on the board.
+        get_possible_actions() -> List[str]:
+            Returns a list of possible actions ("UP", "DOWN", "LEFT", "RIGHT")
+            that can be performed.
+        apply_action(action: str) -> 'SlidingPuzzleState':
+            Applies the given action to the puzzle and returns a new SlidingPuzzleState.
+        __str__() -> str:
+            Returns a string representation of the puzzle board.
+        __eq__(other: object) -> bool:
+            Checks if this SlidingPuzzleState is equal to another.
+        __hash__() -> int:
+            Returns the hash value of the SlidingPuzzleState.
+    """
+
     def __init__(self, size: int, board: Optional[List[List[int]]] = None):
         self.size = size
         if board:
@@ -18,6 +44,7 @@ class SlidingPuzzleState(StateInterface):
         return [numbers[i:i+self.size] for i in range(0, len(numbers), self.size)]
 
     def get_empty_position(self) -> Tuple[int, int]:
+        """ Returns the position (row, col) of the empty space (0) on the board. """
         for i in range(self.size):
             for j in range(self.size):
                 if self.board[i][j] == 0:
@@ -25,6 +52,8 @@ class SlidingPuzzleState(StateInterface):
         raise ValueError("No empty position found")
 
     def get_possible_actions(self) -> List[str]:
+        """ Returns a list of possible actions ("UP", "DOWN", "LEFT", "RIGHT")
+        that can be performed. """
         actions = []
         empty_row, empty_col = self.get_empty_position()
 
@@ -67,8 +96,22 @@ class SlidingPuzzleState(StateInterface):
     def __hash__(self) -> int:
         return hash(tuple(tuple(row) for row in self.board))
 
-def generate_sliding_puzzle_problem(size: int, num_moves: int) -> Tuple[SlidingPuzzleState, SlidingPuzzleState]:
-    goal_state = SlidingPuzzleState(size, [[(i * size + j + 1) % (size ** 2) for j in range(size)] for i in range(size)])
+def generate_sliding_puzzle_problem(size: int,
+                                num_moves: int) -> Tuple[SlidingPuzzleState, SlidingPuzzleState]:
+    """
+    Generates a sliding puzzle problem with a given size and number of moves.
+
+    Args:
+        size (int): The size of the puzzle (e.g., 3 for a 3x3 puzzle).
+        num_moves (int): The number of random moves to apply to the goal state
+        to generate the initial state.
+
+    Returns:
+        Tuple[SlidingPuzzleState, SlidingPuzzleState]: A tuple containing the initial state
+        and the goal state of the puzzle.
+    """
+    goal_state = SlidingPuzzleState(size, [[(i * size + j + 1) % (size ** 2) for j in range(size)]
+                                           for i in range(size)])
     initial_state = goal_state
     visited_states = set()
 
@@ -76,7 +119,7 @@ def generate_sliding_puzzle_problem(size: int, num_moves: int) -> Tuple[SlidingP
         actions = initial_state.get_possible_actions()
         action = random.choice(actions)
         new_state = initial_state.apply_action(action)
-        
+
         while new_state in visited_states:
             action = random.choice(actions)
             new_state = initial_state.apply_action(action)
@@ -87,6 +130,7 @@ def generate_sliding_puzzle_problem(size: int, num_moves: int) -> Tuple[SlidingP
     return initial_state, goal_state
 
 def main():
+    """ Main function to demonstrate the usage of the SlidingPuzzleState class. """
     size = 3
     num_moves = 20
     initial_state, goal_state = generate_sliding_puzzle_problem(size, num_moves)
