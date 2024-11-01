@@ -1,41 +1,5 @@
 """
-out_of_domain_GNN.py
-
-This module trains and evaluates Graph Neural Networks (GNNs) on out-of-domain datasets. The goal is to assess the
-generalization capability of GNNs when applied to datasets that differ from the training data.
-
-Modules and Libraries:
-- logging: For logging the training and evaluation process.
-- pathlib: For handling file paths.
-- datetime: For timestamping logs and outputs.
-- shutil: For file operations.
-- sys: For system-specific parameters and functions.
-- tqdm: For displaying progress bars.
-- torch: For PyTorch operations.
-- torch.optim.adamw: For the AdamW optimizer.
-- prepare_full_graph_dataset: For dataset preparation and loading.
-- GNNs: For defining the GNN models.
-
-Constants:
-- MAX_NODES: Maximum number of nodes in a graph.
-- HIDDEN_DIM: Dimension of hidden layers in the GNN.
-- NUM_LAYERS: Number of layers in the GNN.
-- HEADS: Number of attention heads in the GNN.
-- DROPOUT: Dropout rate for regularization.
-- LAYER_NORM: Whether to use layer normalization.
-- RESIDUAL_FREQUENCY: Frequency of residual connections.
-- LR: Learning rate for the optimizer.
-- WEIGHT_DECAY: Weight decay for the optimizer.
-- EPOCHS: Number of training epochs.
-- WARMUP_EPOCHS: Number of warmup epochs.
-- BATCH_SIZE: Batch size for training.
-
-Functions:
-- train_with_warmup: Trains the model with a warmup learning rate schedule.
-- evaluate: Evaluates the model on the provided data loader.
-- filter_files_by_prefix: Filters files by prefix in the root directory.
-- get_filtered_dataloaders_by_prefix: Gets DataLoader from processed path if it exists, otherwise creates a new DataLoader.
-- main: Main function to set up and train a Graph Neural Network (GNN) model.
+This module trains and evaluates Graph Neural Networks (GNNs) on out-of-domain datasets. The goal is to assess the generalization capability of GNNs when applied to datasets that differ from the training data.
 """
 
 import logging
@@ -43,6 +7,7 @@ from pathlib import Path
 from datetime import datetime
 import shutil
 import sys
+from tkinter.tix import MAX
 from tqdm import tqdm
 import torch
 from torch.optim.adamw import AdamW
@@ -58,6 +23,7 @@ HEADS = 4
 DROPOUT = 0.2
 LAYER_NORM = True
 RESIDUAL_FREQUENCY = 2
+MAX_GRAD_NORM = 1.0
 LR = 0.001
 WEIGHT_DECAY = 0.01
 EPOCHS = 50
@@ -94,7 +60,7 @@ logger.addHandler(file_handler)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-def train_with_warmup(model, loader, optimizer, epochs, warmup_epochs=10, max_grad_norm=1.0):
+def train_with_warmup(model, loader, optimizer, epochs, warmup_epochs, max_grad_norm):
     """
     Trains the model with a warmup learning rate schedule.
 
@@ -104,9 +70,7 @@ def train_with_warmup(model, loader, optimizer, epochs, warmup_epochs=10, max_gr
         optimizer (torch.optim.Optimizer): The optimizer to use for training.
         epochs (int): The number of epochs to train for.
         warmup_epochs (int, optional): The number of epochs to warm up the learning rate.
-        Defaults to 10.
         max_grad_norm (float, optional): The maximum gradient norm for gradient clipping.
-        Defaults to 1.0.
     """
     scheduler = torch.optim.lr_scheduler.OneCycleLR(
         optimizer,
@@ -179,7 +143,16 @@ def evaluate(model, loader):
     return avg_loss
 
 def filter_files_by_prefix(root_dir, prefix):
-    """ Filter files by prefix in the root directory """
+    """
+    Filters files in the root directory by the given prefix.
+
+    Args:
+        root_dir (str): The root directory containing the dataset.
+        prefix (str): The prefix to filter files.
+
+    Returns:
+        list: A list of filtered file paths that match the given prefix.
+    """
     root_path = Path(root_dir)
     filtered_files = []
     for dir_path in root_path.iterdir():
@@ -187,9 +160,21 @@ def filter_files_by_prefix(root_dir, prefix):
             filtered_files.extend([str(p) for p in dir_path.rglob('*.pkl')])
     return filtered_files
 
-def get_filtered_dataloaders_by_prefix(root_dir, processed_path, prefix,
-                                       batch_size=32, test_ratio=0.2, max_nodes=1000):
-    """ Get DataLoader from processed path if it exists, otherwise create a new DataLoader """
+def get_filtered_dataloaders_by_prefix(root_dir, processed_path, prefix,batch_size, test_ratio, max_nodes):
+    """
+    Retrieves filtered data loaders by prefix.
+
+    Args:
+        root_dir (str): The root directory containing the dataset.
+        processed_path (str): The path to save/load the processed data loader.
+        prefix (str): The prefix to filter files.
+        batch_size (int): The batch size for the data loader.
+        test_ratio (float): The ratio of the dataset to use for testing.
+        max_nodes (int): The maximum number of nodes in the dataset.
+
+    Returns:
+        SerializableDataLoader: The data loader containing the filtered dataset.
+    """
     if processed_path and Path(processed_path).exists():
         logger.info("Loading DataLoader from %s", processed_path)
         loader = load_processed_data(processed_path)
@@ -217,18 +202,7 @@ def get_filtered_dataloaders_by_prefix(root_dir, processed_path, prefix,
 
 def main():
     """
-    Main function to set up and train a Graph Neural Network (GNN) model.
-
-    This function performs the following steps:
-    1. Sets the random seed for reproducibility.
-    2. Logs the device being used for computation.
-    3. Determines the base directory and dataset directory.
-    4. Loads the training and evaluation datasets using filtered dataloaders.
-    5. Logs the number of batches in the training and evaluation datasets.
-    6. Initializes the GNN model with specified hyperparameters.
-    7. Sets up the optimizer for training.
-    8. Trains the model using a warmup strategy.
-    9. Evaluates the trained model on the evaluation dataset.
+    Main function to set up and train a Graph Neural Network (GNN) model on out-of-domain datasets.
     """
 
     torch.manual_seed(42)
@@ -285,7 +259,8 @@ def main():
         train_loader,
         optimizer,
         epochs=EPOCHS,
-        warmup_epochs=WARMUP_EPOCHS
+        warmup_epochs=WARMUP_EPOCHS,
+        max_grad_norm=MAX_GRAD_NORM
     )
 
     logger.info("Evaluating the model on the evaluation dataset...")

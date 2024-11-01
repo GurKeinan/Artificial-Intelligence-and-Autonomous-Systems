@@ -1,77 +1,46 @@
-"""
-This module contains the StateInterface and SearchNode classes,
-which are used to represent general states and nodes in a search problem.
-"""
+""" This module contains the definition of the StateInterface and SearchNode classes. """
 
-from typing import List, Optional
+from typing import List, Tuple, Optional, Callable, Dict
 
 class StateInterface:
     """
-    Interface for a state in a search problem.
+    This class defines the interface for a state in a search problem. It is used by the search algorithms to interact
     """
     def get_possible_actions(self) -> List[str]:
-        """ Return a list of possible actions that can be applied to the current state. """
         raise NotImplementedError
 
     def apply_action(self, action: str) -> 'StateInterface':
-        """ Apply the given action to the current state and return the new state. """
         raise NotImplementedError
 
     def __eq__(self, other: object) -> bool:
-        """ Check if the current state is equal to another state. """
-        return NotImplemented
+        raise NotImplementedError
 
     def __hash__(self) -> int:
-        """ Return a hash value for the current state. """
         raise NotImplementedError
 
 
 class SearchNode:
     """
-    A class used to represent a node in a search tree.
-    Attributes
-    ----------
-    state : StateInterface
-        The state associated with this node.
-    g : int
-        The cost to reach this node from the start node.
-    h : int
-        The estimated cost to reach the goal from this node.
-    h_0 : int
-        The initial heuristic value.
-    f : int
-        The total estimated cost (g + h).
-    parent : Optional[SearchNode]
-        The parent node of this node.
-    action : Optional[str]
-        The action taken to reach this node from the parent node.
-    children : List[SearchNode]
-        The list of child nodes.
-    serial_number : int
-        A unique identifier for this node.
-    child_count : int
-        The number of children this node has.
-    min_h_seen : int
-        The minimum heuristic value seen so far.
-    nodes_since_min_h : int
-        The number of nodes generated since the minimum heuristic value was seen.
-    max_f_seen : int
-        The maximum f value seen so far.
-    nodes_since_max_f : int
-        The number of nodes generated since the maximum f value was seen.
-    progress : float
-        The progress metric for this node.
-    Methods
-    -------
-    __init__(self, state: StateInterface, serial_number: int, g: int, h: int,
-    h_0: int, parent: Optional['SearchNode'] = None, action: Optional[str] = None)
-        Initializes a SearchNode with the given parameters.
-    __lt__(self, other: 'SearchNode') -> bool
-        Compares this node with another node based on their f values.
-    """
+    This class represents a node in the search tree. It contains the state, the cost of the path to reach this node, the heuristic value of the node, the parent node, the action that led to this node, and the children of this node. It also contains some additional information that is used by the search algorithms to optimize the search process.
 
-    def __init__(self, state: StateInterface, serial_number: int, g: int, h: int,
-                 h_0: int, parent: Optional['SearchNode'] = None, action: Optional[str] = None):
+    Attributes:
+        state (StateInterface): The state of the node.
+        g (int): The cost of the path from the root to this node.
+        h (int): The heuristic value of the node.
+        h_0 (int): The heuristic value of the node with respect to the initial state.
+        f (int): The sum of the cost and the heuristic value of the node.
+        parent (Optional[SearchNode]): The parent node of this node.
+        action (Optional[str]): The action that led to this node.
+        children (List[SearchNode]): The children of this node.
+        serial_number (int): A unique identifier for this node.
+        child_count (int): The number of children of this node.
+        min_h_seen (int): The minimum heuristic value seen in the subtree rooted at this node.
+        nodes_since_min_h (int): The number of nodes that have been expanded since the minimum heuristic value was last updated.
+        max_f_seen (int): The maximum f value seen in the subtree rooted at this node.
+        nodes_since_max_f (int): The number of nodes that have been expanded since the maximum f value was last updated.
+    """
+    def __init__(self, state: StateInterface, serial_number: int, g: int, h: int, h_0: int, parent: Optional['SearchNode'] = None,
+                 action: Optional[str] = None):
         self.state = state
         self.g = g
         self.h = h
@@ -86,7 +55,7 @@ class SearchNode:
         self.nodes_since_min_h: int = 0
         self.max_f_seen: int = self.f
         self.nodes_since_max_f: int = 0
-        self.progress: float = 0.0
 
     def __lt__(self, other: 'SearchNode') -> bool:
         return self.f < other.f
+

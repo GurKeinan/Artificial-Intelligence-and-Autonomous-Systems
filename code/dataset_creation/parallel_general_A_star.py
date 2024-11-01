@@ -1,8 +1,9 @@
+""" This script generates the dataset for the sliding puzzle and block world problems using parallel processing."""
 
-import multiprocessing as mp
 from pathlib import Path
 import pickle
 from tqdm import tqdm
+import multiprocessing as mp
 
 from sliding_puzzle_generator import generate_sliding_puzzle_problem
 from block_world_generator import generate_block_world_problem
@@ -10,10 +11,7 @@ from sliding_puzzle_heuristics import sp_manhattan_distance, sp_misplaced_tiles,
 from block_world_heuristics import bw_misplaced_blocks, bw_height_difference, bw_h_max
 
 # Import functions from general_A_star.py
-from general_a_star import (
-    a_star,
-    calculate_progress,
-)
+from general_a_star import a_star, calculate_progress
 
 def process_single_sp_problem(args):
     """Worker function to process a single sliding puzzle problem instance"""
@@ -21,7 +19,7 @@ def process_single_sp_problem(args):
 
     try:
         initial_state, goal_state = generate_sliding_puzzle_problem(size, num_moves)
-        _, search_tree_root = a_star(initial_state, goal_state, heuristic_func)
+        solution, search_tree_root = a_star(initial_state, goal_state, heuristic_func)
 
         # Calculate progress for each node
         calculate_progress(search_tree_root)
@@ -44,7 +42,7 @@ def process_single_bw_problem(args):
 
     try:
         initial_state, goal_state = generate_block_world_problem(num_blocks, num_stacks, num_moves)
-        _, search_tree_root = a_star(initial_state, goal_state, heuristic_func)
+        solution, search_tree_root = a_star(initial_state, goal_state, heuristic_func)
 
         # Calculate progress for each node
         calculate_progress(search_tree_root)
@@ -125,7 +123,7 @@ def save_sp_search_tree_parallel(heuristic_func):
                          total=len(all_params),
                          desc=f"Processing Sliding Puzzle - {heuristic_func.__name__}"):
             if result:
-                save_sp_results(result, BASE_DIR)
+                save_sp_results(result, base_dir)
                 results.append(result)
 
     return results
@@ -141,8 +139,7 @@ def save_bw_search_tree_parallel(heuristic_func):
         for num_stacks in NUM_STACKS_LIST:
             for num_moves in NUM_MOVES_LIST:
                 for sample_idx in range(SAMPLES):
-                    all_params.append((num_blocks, num_stacks, num_moves,
-                                       sample_idx, worker_id, heuristic_func))
+                    all_params.append((num_blocks, num_stacks, num_moves, sample_idx, worker_id, heuristic_func))
                     worker_id += 1
 
     # Determine number of processes - use 80% of available CPUs
@@ -155,7 +152,7 @@ def save_bw_search_tree_parallel(heuristic_func):
                          total=len(all_params),
                          desc=f"Processing Block World - {heuristic_func.__name__}"):
             if result:
-                save_bw_results(result, BASE_DIR)
+                save_bw_results(result, base_dir)
                 results.append(result)
 
     return results
@@ -173,13 +170,13 @@ NUM_MOVES_LIST = [7, 10, 15]
 SAMPLES = 200
 
 # Set up base directory
-BASE_DIR = Path(__file__).resolve().parent if Path(__file__).resolve().parent.name == "code"\
-                                            else Path(__file__).resolve().parent / "code"
+base_dir = Path(__file__).resolve().parent
+if base_dir.name != "code":
+    base_dir = base_dir / "code"
 
 def main():
-    """ Main function to run the parallel processing of search problems """
     # Create base directory if it doesn't exist
-    Path(BASE_DIR).mkdir(parents=True, exist_ok=True)
+    Path(base_dir).mkdir(parents=True, exist_ok=True)
 
     print(f"Using {max(1, int(mp.cpu_count() * 0.8))} processes")
 

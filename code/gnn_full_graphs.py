@@ -284,7 +284,6 @@ def main():
     logger.info("Training dataset loaded with %d batches", len(train_loader))
     logger.info("Evaluation dataset loaded with %d batches", len(test_loader))
     logger.info("Feature dimension: %d", feature_dim)
-    # logger.info("Total nodes in full dataset: %d", sum([data.num_nodes for data in full_loader.dataset]))
     logger.info("Total nodes in training dataset: %d", sum([data.num_nodes for data in train_loader.dataset]))
     logger.info("Total nodes in evaluation dataset: %d", sum([data.num_nodes for data in test_loader.dataset]))
 

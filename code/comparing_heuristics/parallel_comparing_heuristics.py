@@ -2,18 +2,6 @@
 This module provides functionality to compare different heuristics for solving
 sliding puzzle and blocks world problems using the A* search algorithm. The
 comparison is done in parallel to utilize multiple CPU cores efficiently.
-
-Classes:
-    HeuristicComparison: A class to generate problem instances, solve them using
-                         different heuristics, and analyze the results.
-
-Functions:
-    configure_logging: Configures logging settings for the module.
-    solve_single_problem: Worker function to solve a single problem with all heuristics.
-
-Usage:
-    The main function runs parameter studies for both sliding puzzle and blocks
-    world domains, using up to 75% of available CPU cores by default.
 """
 
 import sys
@@ -31,35 +19,32 @@ repo_root = Path(__file__).resolve().parent.parent
 dataset_creation_path = repo_root / "dataset_creation"
 sys.path.append(str(dataset_creation_path))
 
-from sliding_puzzle_generator import generate_sliding_puzzle_problem # type: ignore
-from block_world_generator import generate_block_world_problem # type: ignore
-from general_A_star import a_star # type: ignore
-from sliding_puzzle_heuristics import sp_manhattan_distance, sp_misplaced_tiles, sp_h_max # type: ignore
-from block_world_heuristics import bw_misplaced_blocks, bw_height_difference, bw_h_max # type: ignore
+from sliding_puzzle_generator import generate_sliding_puzzle_problem
+from block_world_generator import generate_block_world_problem
+from general_a_star import a_star
+from sliding_puzzle_heuristics import sp_manhattan_distance, sp_misplaced_tiles, sp_h_max
+from block_world_heuristics import bw_misplaced_blocks, bw_height_difference, bw_h_max
+
+# create models directory if it doesn't exist
+models_dir = repo_root / "models"
+models_dir.mkdir(exist_ok=True)
 
 # Create logs directory if it doesn't exist
-current_dir = Path(__file__).resolve().parent
-log_dir = current_dir / "logs"
+log_dir = repo_root / "logs"
 log_dir.mkdir(exist_ok=True)
 
-def configure_logging():
-    """
-    Configures the logging settings for the application.
-    This function sets up the logging configuration to write log messages to a file named "app.log"
-    located in the specified log directory.
-    The log messages will include the timestamp, logger name,
-    log level, and the message itself. The logging level is set to INFO.
-    """
+# Remove existing log file
+log_filename = log_dir / "heuristic_comparison.log"
+if log_filename.exists():
+    log_filename.unlink()
 
-    log_file = log_dir / "app.log"
-    logging.basicConfig(
-        filename=log_file,
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
+file_handler = logging.FileHandler(log_filename)
+file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 
-configure_logging()
+# Set up logger
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logger.addHandler(file_handler)
 
 def solve_single_problem(problem_tuple, heuristics):
     """Worker function to solve a single problem with all heuristics"""
@@ -108,7 +93,7 @@ class HeuristicComparison:
         _get_state_serial_map(root) -> Dict:
             Create mapping of states to their serial numbers.
 
-        run_comparison(num_problems: int, save_results=True, **kwargs):
+        run_comparison(num_problems: int, **kwargs):
             Run full comparison and save results.
 
         run_parameter_study():
@@ -141,11 +126,9 @@ class HeuristicComparison:
     def generate_problems(self, num_problems: int, **kwargs) -> List[Tuple]:
         """Generate multiple problem instances in parallel"""
         if self.domain == 'sliding_puzzle':
-            desc = f"Generating sliding puzzle problems - size={kwargs['size']}, \
-                num_moves={kwargs['num_moves']}"
+            desc = f"Generating sliding puzzle problems - size={kwargs['size']}, num_moves={kwargs['num_moves']}"
         else:
-            desc = f"Generating blocks world problems - num_blocks={kwargs['num_blocks']}, \
-            num_stacks={kwargs['num_stacks']}, num_moves={kwargs['num_moves']}"
+            desc = f"Generating blocks world problems - num_blocks={kwargs['num_blocks']},num_stacks={kwargs['num_stacks']}, num_moves={kwargs['num_moves']}"
 
         logger.info(desc)
 
@@ -176,8 +159,7 @@ class HeuristicComparison:
             for problem in problems:
                 futures.append(executor.submit(solve_func, problem))
 
-            for future in tqdm(as_completed(futures), total=len(problems),
-                             desc="Solving problems"):
+            for future in tqdm(as_completed(futures), total=len(problems), desc="Solving problems"):
                 success, results = future.result()
                 if success:
                     metrics = self._analyze_search_trees(results)
@@ -272,7 +254,7 @@ class HeuristicComparison:
         traverse(root)
         return state_map
 
-    def run_comparison(self, num_problems: int, save_results=True, **kwargs):
+    def run_comparison(self, num_problems: int, **kwargs):
         """Run full comparison and save results"""
         problems = self.generate_problems(num_problems, **kwargs)
         results = self.solve_with_heuristics(problems)
@@ -282,11 +264,6 @@ class HeuristicComparison:
             return None
 
         df = pd.DataFrame(results)
-
-        if save_results:
-            filename = f"heuristic_comparison_{self.domain}.csv"
-            df.to_csv(filename, index=False)
-
         return df
 
     def run_parameter_study(self):
@@ -297,7 +274,7 @@ class HeuristicComparison:
                 {'size': 4, 'num_moves': 8},
                 {'size': 4, 'num_moves': 11},
                 {'size': 6, 'num_moves': 5},
-                {'size': 6, 'num_moves': 10},
+                {'size': 6, 'num_moves': 8},
                 {'size': 6, 'num_moves': 11}
             ]
         else:  # blocks_world
@@ -315,7 +292,7 @@ class HeuristicComparison:
 
         results = []
         for param_set in tqdm(params, desc="Parameter combinations"):
-            result = self.run_comparison(num_problems=50, save_results=True, **param_set)
+            result = self.run_comparison(num_problems=50, **param_set)
             if result is not None and not result.empty:
                 results.append((param_set, result))
 
@@ -460,8 +437,7 @@ class HeuristicComparison:
         plt.close()
 
     def _save_raw_data(self, results, file_dir):
-        timestamp = pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')
-        data_filename = file_dir / f'{self.domain}_results_{timestamp}.csv'
+        data_filename = file_dir / f'heuristic_comparision_{self.domain}_results.csv'
 
         # Combine all results into one DataFrame with parameter information
         all_data = []

@@ -1,0 +1,39 @@
+name: base
+channels:
+  - pytorch
+  - pyg
+  - conda-forge
+  - defaults
+dependencies:
+  # Core Scientific Libraries
+  - matplotlib=3.8.4
+  - networkx=3.2.1
+  - numpy=1.26.4
+  - pandas=2.2.2
+  - plotly=5.22.0
+  - scikit-image=0.23.2
+  - scikit-learn=1.4.2
+  - scipy=1.13.1
+  - seaborn=0.13.2
+  - sympy=1.12
+  - tqdm=4.66.1
+
+  # PyTorch Ecosystem
+  - pytorch=2.4.1
+  - torchvision=0.19.1
+  - torchaudio=2.4.1
+
+  # PyTorch Geometric and Dependencies
+  - pyg=2.5.3
+  - torch-scatter
+  - torch-sparse=0.6.18
+  - torch-cluster
+  - torch-spline-conv
+
+  # Development Tools
+  - typing-extensions>=4.9.0
+  - pip>=23.0.1
+
+  # Additional pip packages if needed
+  - pip:
+    - torch-geometric==2.5.3

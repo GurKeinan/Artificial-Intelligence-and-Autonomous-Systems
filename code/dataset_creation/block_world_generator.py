@@ -1,52 +1,20 @@
-"""
-This module contains the implementation of a Block World problem generator.
-
-Classes:
-    BlockWorldState: The state of the Block World with a given number of blocks and stacks.
-
-Functions:
-    generate_block_world_problem(num_blocks: int, num_stacks: int,
-    num_moves: int) -> Tuple[BlockWorldState, BlockWorldState]:
-        Generates an initial and goal state for the Block World problem
-        with a specified number of blocks, stacks, and moves.
-
-    main():
-        Demonstrates the generation of a Block World problem and prints the initial and goal states
-        along with possible actions from the initial state.
-"""
+""" Block World Problem Generator """
 
 import random
 from typing import List, Tuple, Optional
+
 from general_state import StateInterface
 
 
 class BlockWorldState(StateInterface):
-    """
-    Represents the state of a block world in which blocks can be stacked on top of each other.
-    Attributes:
-        num_blocks (int): The number of blocks in the block world.
-        num_stacks (int): The number of stacks in the block world.
-        stacks (List[List[int]]): The current configuration of blocks in stacks.
-    Methods:
-        __init__(num_blocks: int, num_stacks: int, stacks: Optional[List[List[int]]] = None):
-            Initializes a new BlockWorldState with the given number of blocks and stacks.
-            If stacks are not provided, generates a random configuration of blocks in stacks.
-        _generate_random_stacks() -> List[List[int]]:
-            Generates a random configuration of blocks in stacks.
-        get_possible_actions() -> List[Tuple[int, int]]:
-            Returns a list of possible actions that can be taken from the current state.
-            Each action is represented as a tuple (i, j) where a block is
-            moved from stack i to stack j.
-        apply_action(action: Tuple[int, int]) -> 'BlockWorldState':
-            Applies the given action to the current state and returns a new BlockWorldState.
-        __str__() -> str:
-            Returns a string representation of the current state.
-        __eq__(other: object) -> bool:
-            Checks if the current state is equal to another BlockWorldState.
-        __hash__() -> int:
-            Returns a hash value for the current state.
-    """
+    """BlockWorldState represents a state in the Block World problem.
 
+    Args:
+        num_blocks (int): The number of blocks in the problem.
+        num_stacks (int): The number of stacks in the problem.
+        stacks (Optional[List[List[int]]], optional): The initial configuration of stacks.
+        Defaults to None.
+    """
     def __init__(self, num_blocks: int, num_stacks: int, stacks: Optional[List[List[int]]] = None):
         self.num_blocks = num_blocks
         self.num_stacks = num_stacks
@@ -56,14 +24,10 @@ class BlockWorldState(StateInterface):
             self.stacks = self._generate_random_stacks()
 
     def _generate_random_stacks(self) -> List[List[int]]:
-        """
-        Generates a random configuration of blocks stacked in multiple stacks.
-        This method creates a list of stacks, each containing a random distribution
-        of blocks. The blocks are shuffled and then distributed randomly across the
-        stacks.
+        """Generate a random configuration of stacks.
+
         Returns:
-            List[List[int]]: A list of stacks, where each stack is a list of block
-            numbers. Empty stacks are removed from the final output.
+            List[List[int]]: A list of stacks, each stack is a list of block numbers.
         """
 
         blocks = list(range(1, self.num_blocks + 1))
@@ -75,14 +39,13 @@ class BlockWorldState(StateInterface):
         return [stack for stack in stacks]  # Remove empty stacks
 
     def get_possible_actions(self) -> List[Tuple[int, int]]:
-        """
-        Generate a list of possible actions in the block world.
-        Each action is represented as a tuple (i, j) where a block is moved from
-        the top of stack i to the top of stack j.
-        Returns:
-            List[Tuple[int, int]]: A list of tuples representing possible actions.
-        """
+        """Get all possible actions from the current state.
 
+        Returns:
+            List[Tuple[int, int]]: List of possible moves,
+            where each move is a tuple (from_stack, to_stack)
+            indicating moving the top block from from_stack to to_stack.
+        """
         actions = []
         for i, stack in enumerate(self.stacks):
             if stack:
@@ -92,17 +55,15 @@ class BlockWorldState(StateInterface):
         return actions
 
     def apply_action(self, action: Tuple[int, int]) -> 'BlockWorldState':
-        """
-        Applies the given action to the current block world state and returns a new state.
-        Args:
-            action (Tuple[int, int]): A tuple representing the action to be applied.
-            The first element is the index of the stack to move a block from,
-            and the second element is the index of the stack to move the block to.
-        Returns:
-            BlockWorldState: A new BlockWorldState object
-            representing the state after the action is applied.
-        """
+        """Apply an action to the current state and return the resulting state.
 
+        Args:
+            action (Tuple[int, int]): A tuple (from_stack, to_stack) indicating
+            moving the top block from from_stack to to_stack.
+
+        Returns:
+            BlockWorldState: A new state after applying the action.
+        """
         from_stack, to_stack = action
         new_stacks = [stack[:] for stack in self.stacks]
         block = new_stacks[from_stack].pop()
@@ -121,17 +82,19 @@ class BlockWorldState(StateInterface):
     def __hash__(self) -> int:
         return hash(tuple(tuple(stack) for stack in self.stacks))
 
-def generate_block_world_problem(num_blocks: int, num_stacks: int,
+def generate_block_world_problem(num_blocks: int,
+                                 num_stacks: int,
                                  num_moves: int) -> Tuple[BlockWorldState, BlockWorldState]:
     """
-    Generates a block world problem with a specified number of blocks, stacks, and moves.
+    Generate a random Block World problem.
+
     Args:
-        num_blocks (int): The number of blocks in the block world.
-        num_stacks (int): The number of stacks in the block world.
-        num_moves (int): The number of moves to perform to generate the initial state.
+        num_blocks (int): Number of blocks in the problem.
+        num_stacks (int): Number of stacks in the problem.
+        num_moves (int): Number of random moves to make from goal state to initial state.
+
     Returns:
-        Tuple[BlockWorldState, BlockWorldState]: A tuple containing the initial state
-        and the goal state of the block world.
+        Tuple[BlockWorldState, BlockWorldState]: A tuple containing (initial_state, goal_state).
     """
 
     goal_state = BlockWorldState(num_blocks, num_stacks)
@@ -155,10 +118,7 @@ def generate_block_world_problem(num_blocks: int, num_stacks: int,
     return initial_state, goal_state
 
 def main():
-    """
-    Main function to demonstrate the generation of a block world problem.
-    """
-
+    """ usage example of the block world generator """
     num_blocks = 5
     num_stacks = 3
     num_moves = 10
