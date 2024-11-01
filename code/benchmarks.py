@@ -43,8 +43,9 @@ log_dir = Path("logs")
 log_dir.mkdir(exist_ok=True)
 
 # Create timestamp for the log file
-timestamp = datetime.now().strftime('%d.%m.%Y_%H:%M:%S')
-log_filename = log_dir / f"benchmarks_{timestamp}.log"
+log_filename = log_dir / "benchmarks.log"
+if log_filename.exists():
+    log_filename.unlink()
 
 # Create file handler with immediate flush
 file_handler = logging.FileHandler(log_filename)
@@ -254,7 +255,6 @@ def pbp_benchmark(root):
     a score based on the collected PBP values and progress values.
     Args:
         root (Node): The root node of the tree to be traversed.
-        print_res (bool, optional): If True, the result will be printed. Defaults to False.
     Returns:
         tuple: A tuple containing three elements:
             - nodes (list of float): The list of PBP values for each node.
@@ -399,7 +399,7 @@ def main():
     # Load filtered data
     data, names = load_filtered_data(
         root_dir=data_dir,
-        max_nodes=20000
+        max_nodes=15000
     )
     logger.info("Loaded %d filtered search trees.", len(data))
 
@@ -413,7 +413,7 @@ def main():
 
         for tree, name in tqdm(zip(data, names), total=len(data)):
             try:
-                nodes, targets, sse = benchmark_model(tree, print_res=False)
+                nodes, targets, sse = benchmark_model(tree)
                 results.append((nodes, targets, sse))
                 total_samples += len(nodes)
             except Exception as e: # pylint: disable=broad-except

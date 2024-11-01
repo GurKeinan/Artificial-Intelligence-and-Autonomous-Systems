@@ -1,0 +1,83 @@
+2024-11-01 09:33:55,930 - INFO - Read Datasets: 
+ /Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_h_max_blocks_5_stacks_5_moves_10
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_misplaced_blocks_blocks_5_stacks_3_moves_10
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_misplaced_blocks_blocks_10_stacks_5_moves_7
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_height_difference_blocks_5_stacks_5_moves_7
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/sp_sp_misplaced_tiles_size_9_moves_10
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_height_difference_blocks_10_stacks_3_moves_15
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/sp_sp_manhattan_distance_size_9_moves_7
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_misplaced_blocks_blocks_15_stacks_5_moves_15
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_height_difference_blocks_5_stacks_5_moves_10
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_h_max_blocks_10_stacks_5_moves_10
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/sp_sp_manhattan_distance_size_9_moves_15
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_misplaced_blocks_blocks_10_stacks_5_moves_15
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/sp_sp_manhattan_distance_size_5_moves_15
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/sp_sp_misplaced_tiles_size_7_moves_15
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_misplaced_blocks_blocks_15_stacks_3_moves_15
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_height_difference_blocks_5_stacks_3_moves_10
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/sp_sp_h_max_size_7_moves_10
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_h_max_blocks_10_stacks_3_moves_10
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/sp_sp_misplaced_tiles_size_9_moves_7
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_misplaced_blocks_blocks_10_stacks_3_moves_15
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_h_max_blocks_5_stacks_3_moves_10
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_misplaced_blocks_blocks_5_stacks_5_moves_7
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_misplaced_blocks_blocks_15_stacks_5_moves_7
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/sp_sp_misplaced_tiles_size_5_moves_10
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_misplaced_blocks_blocks_5_stacks_5_moves_10
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/sp_sp_manhattan_distance_size_7_moves_10
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_h_max_blocks_5_stacks_5_moves_7
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_h_max_blocks_10_stacks_5_moves_7
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/sp_sp_h_max_size_5_moves_15
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/sp_sp_misplaced_tiles_size_9_moves_15
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_misplaced_blocks_blocks_5_stacks_3_moves_15
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_h_max_blocks_5_stacks_5_moves_15
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/sp_sp_h_max_size_7_moves_7
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/sp_sp_manhattan_distance_size_7_moves_7
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_misplaced_blocks_blocks_10_stacks_5_moves_10
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/sp_sp_manhattan_distance_size_9_moves_10
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_height_difference_blocks_5_stacks_5_moves_15
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_misplaced_blocks_blocks_15_stacks_5_moves_10
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/sp_sp_misplaced_tiles_size_5_moves_7
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_height_difference_blocks_5_stacks_3_moves_7
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_misplaced_blocks_blocks_10_stacks_3_moves_7
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_height_difference_blocks_10_stacks_3_moves_10
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_misplaced_blocks_blocks_10_stacks_3_moves_10
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/sp_sp_manhattan_distance_size_5_moves_7
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/sp_sp_h_max_size_5_moves_7
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_misplaced_blocks_blocks_15_stacks_3_moves_7
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_misplaced_blocks_blocks_5_stacks_3_moves_7
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_h_max_blocks_10_stacks_3_moves_15
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/sp_sp_h_max_size_7_moves_15
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_height_difference_blocks_5_stacks_3_moves_15
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_misplaced_blocks_blocks_15_stacks_3_moves_10
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/sp_sp_misplaced_tiles_size_7_moves_7
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_h_max_blocks_10_stacks_3_moves_7
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/sp_sp_misplaced_tiles_size_7_moves_10
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/sp_sp_manhattan_distance_size_5_moves_10
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/processed
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_h_max_blocks_5_stacks_3_moves_7
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/sp_sp_h_max_size_5_moves_10
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_height_difference_blocks_10_stacks_3_moves_7
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/raw
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/sp_sp_manhattan_distance_size_7_moves_15
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/sp_sp_misplaced_tiles_size_5_moves_15
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_misplaced_blocks_blocks_5_stacks_5_moves_15
+/Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_h_max_blocks_5_stacks_3_moves_15
+2024-11-01 09:33:55,953 - INFO - Found 11946 PKL files in the dataset.
+2024-11-01 09:34:44,596 - WARNING - Failed to process /Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/dataset/bw_bw_height_difference_blocks_10_stacks_3_moves_15/sample_94_worker_1694.pkl: Ran out of input
+2024-11-01 09:38:10,238 - INFO - Processing Summary:
+2024-11-01 09:38:10,239 - INFO - - Accepted trees: 11751
+2024-11-01 09:38:10,239 - INFO - - Rejected trees (too complex): 194
+2024-11-01 09:38:10,239 - INFO - Loaded 11751 filtered search trees.
+2024-11-01 09:38:10,239 - INFO - Running vesp_benchmark...
+2024-11-01 09:38:18,386 - INFO - MSE for vesp_benchmark: 0.1605
+2024-11-01 09:38:18,778 - INFO - Running vasp_benchmark...
+2024-11-01 09:38:31,717 - INFO - MSE for vasp_benchmark: 0.0569
+2024-11-01 09:38:32,164 - INFO - Running pbp_benchmark...
+2024-11-01 09:38:39,189 - INFO - MSE for pbp_benchmark: 0.0379
+2024-11-01 09:38:39,190 - INFO - Running Random Forest benchmark...
+2024-11-01 09:38:39,190 - INFO - Collecting data from all trees...
+2024-11-01 09:39:29,235 - INFO - Total nodes collected: 9286678
+2024-11-01 09:39:30,023 - INFO - Training Random Forest model...
+2024-11-01 09:44:38,650 - INFO - Train MSE for Random Forest: 0.0328
+2024-11-01 09:44:38,650 - INFO - Test MSE for Random Forest: 0.0328

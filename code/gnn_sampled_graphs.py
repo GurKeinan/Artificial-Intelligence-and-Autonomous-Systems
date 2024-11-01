@@ -45,19 +45,20 @@ import random
 from pathlib import Path
 from datetime import datetime
 import sys
+import numpy as np
 import torch
 from torch.optim.adamw import AdamW
 from torch_geometric.data import Data, Batch
 from torch_geometric.utils import k_hop_subgraph
 from tqdm import tqdm
-from prepare_full_graph_dataset import get_filtered_dataloaders
+from prepare_full_graph_dataset import SerializableDataLoader, get_filtered_dataloaders
 from gnns import SampleGNN
 
 # constants for filtering
 MAX_NODES = 10000  # Maximum number of nodes in a graph
 
 # Constants for sampling
-SAMPLES_PER_EPOCH = 10000  # Total samples to generate per epoch
+SAMPLES_PER_EPOCH = 50000  # Total samples to generate per epoch
 MAX_DISTANCE = 3  # Maximum hop distance for subgraphs
 NUM_GNN_LAYERS = MAX_DISTANCE + 2  # Number of GNN layers based on max distance
 
@@ -71,9 +72,9 @@ RESIDUAL_FREQUENCY = 2
 # Training constants
 LR = 0.001
 WEIGHT_DECAY = 0.01
-EPOCHS = 100
+EPOCHS = 50
 WARMUP_EPOCHS = 10
-BATCH_SIZE = 128
+BATCH_SIZE = 256
 TEST_RATIO = 0.2
 
 # attach dataset_creation to sys.path for habndling pickles if necessary
@@ -81,11 +82,18 @@ repo_root = Path(__file__).resolve().parent
 dataset_creation_path = repo_root / "dataset_creation"
 sys.path.append(str(dataset_creation_path))
 
+# create models directory if it doesn't exist
+models_dir = repo_root / "models"
+models_dir.mkdir(exist_ok=True)
+
 # Set up logging
 log_dir = Path("logs")
 log_dir.mkdir(exist_ok=True)
-timestamp = datetime.now().strftime('%d.%m.%Y_%H:%M:%S')
-log_filename = log_dir / f"training_sampled_GNN_{timestamp}.log"
+
+# Remove existing log file
+log_filename = log_dir / "gnn_sampled_graphs.log"
+if log_filename.exists():
+    log_filename.unlink()
 
 file_handler = logging.FileHandler(log_filename)
 file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
@@ -113,17 +121,21 @@ class DynamicSampledLoader:
         __len__():
             Returns the number of batches per epoch.
     """
-
-    def __init__(self, original_dataset, samples_per_epoch, max_distance,
-                 batch_size, shuffle=True):
+    def __init__(self, original_dataset, samples_per_epoch, max_distance, batch_size, shuffle=True):
         self.original_dataset = original_dataset
         self.samples_per_epoch = samples_per_epoch
         self.max_distance = max_distance
         self.batch_size = batch_size
         self.shuffle = shuffle
 
-        # Cache dataset indices for efficient sampling
+        # Calculate weights based on number of nodes in each graph
         self.dataset_indices = list(range(len(original_dataset)))
+        self.weights = np.array([
+            original_dataset[i].x.size(0) for i in self.dataset_indices
+        ])
+        # Normalize weights to probabilities
+        self.weights = self.weights / self.weights.sum()
+        self.rng = np.random.default_rng(seed=42)
 
     def sample_subgraph(self, graph):
         """
@@ -182,8 +194,7 @@ class DynamicSampledLoader:
 
         # Sample graphs and nodes until we have enough samples
         while samples_remaining > 0:
-            # Sample a graph (with replacement)
-            graph_idx = random.choice(self.dataset_indices)
+            graph_idx = self.rng.choice(self.dataset_indices, p=self.weights)
             graph = self.original_dataset[graph_idx]
 
             # Sample a subgraph
@@ -241,42 +252,26 @@ def train_one_epoch(model, loader, optimizer, scheduler, criterion, max_grad_nor
     """
 
     model.train()
-    total_loss = 0
-    valid_batches = 0
-
     for batch in tqdm(loader, total=len(loader)):
         optimizer.zero_grad()
         batch = batch.to(device)
         predictions = model(batch)
+        loss = criterion(predictions, batch.y)
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
+        optimizer.step()
+        scheduler.step()
 
-        if hasattr(batch, 'train_mask'):
-            train_pred = predictions[batch.train_mask]
-            train_true = batch.y[batch.train_mask]
+    return loss.item()
 
-            if len(train_pred) > 0:
-                loss = criterion(train_pred, train_true)
-                loss.backward()
-
-                torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
-                optimizer.step()
-                scheduler.step()
-
-                total_loss += loss.item()
-                valid_batches += 1
-
-    avg_loss = total_loss / valid_batches if valid_batches > 0 else float('inf')
-    return avg_loss
-
-def evaluate_sampled_model(model, loader, mask_type="Test"):
+def evaluate_model(model, loader):
     """
-    Evaluates a sampled model on a given dataset loader.
+    Evaluates the given model using the provided data loader.
     Args:
         model (torch.nn.Module): The model to be evaluated.
-        loader (torch.utils.data.DataLoader): DataLoader containing the dataset to evaluate.
-        mask_type (str, optional): Type of mask to use for evaluation.
-                                   Options are "Train", "Test", or "Full". Default is "Test".
+        loader (torch.utils.data.DataLoader): The data loader providing the dataset for evaluation.
     Returns:
-        float or None: The average loss over the samples if there are any, otherwise None.
+        float: The average loss over all valid batches.
     """
 
     model.eval()
@@ -288,24 +283,12 @@ def evaluate_sampled_model(model, loader, mask_type="Test"):
         for batch in loader:
             batch = batch.to(device)
             predictions = model(batch)
+            loss = criterion(predictions, batch.y)
+            total_loss += loss.item() * len(batch.y)
+            num_samples += len(batch.y)
 
-            if mask_type == "Train":
-                mask = batch.train_mask
-            elif mask_type == "Test":
-                mask = batch.test_mask
-            else:  # "Full"
-                mask = torch.ones_like(batch.train_mask)
+    return total_loss / num_samples
 
-            if mask.sum() > 0:
-                loss = criterion(predictions[mask], batch.y[mask])
-                total_loss += loss.item() * mask.sum()
-                num_samples += mask.sum()
-
-    if num_samples > 0:
-        avg_loss = total_loss / num_samples
-        logger.info('%s Average Loss: %.4f', mask_type, avg_loss)
-        return avg_loss
-    return None
 
 def evaluate_and_save_model(model, loader, best_val_loss):
     """
@@ -319,17 +302,17 @@ def evaluate_and_save_model(model, loader, best_val_loss):
         float: The updated best validation loss.
     """
 
-    evaluate_sampled_model(model, loader, "Train")
-    val_loss = evaluate_sampled_model(model, loader, "Test")
+    val_loss = evaluate_model(model, loader)
+    logger.info('Val Average Loss: %.4f', val_loss)
 
     if val_loss is not None and val_loss < best_val_loss:
         best_val_loss = val_loss
-        torch.save(model.state_dict(), 'best_sample_training_model.pth')
+        torch.save(model.state_dict(), repo_root / 'models' / 'gnn_sample_graph_best_model.pth')
         logger.info('New best model saved with validation loss: %.4f', best_val_loss)
 
     return best_val_loss
 
-def train_sampled_gnn(model, original_loader, optimizer, epochs,
+def train_sampled_gnn(model, train_loader, test_loader, optimizer, epochs,
                       warmup_epochs=10, max_grad_norm=1.0):
     """
     Trains a Graph Neural Network (GNN) model using dynamic sampling.
@@ -349,28 +332,33 @@ def train_sampled_gnn(model, original_loader, optimizer, epochs,
     criterion = torch.nn.MSELoss()
 
     # Create sampled loader
-    sampled_loader = DynamicSampledLoader(
-        original_dataset=original_loader.dataset,
+    sampled_train_loader = DynamicSampledLoader(
+        original_dataset=train_loader.dataset,
         samples_per_epoch=SAMPLES_PER_EPOCH,
         max_distance=MAX_DISTANCE,
         batch_size=BATCH_SIZE
     )
 
-    scheduler = initialize_scheduler(optimizer, epochs, warmup_epochs, sampled_loader)
+    sampled_test_loader = DynamicSampledLoader(
+        original_dataset=test_loader.dataset,
+        samples_per_epoch=SAMPLES_PER_EPOCH,
+        max_distance=MAX_DISTANCE,
+        batch_size=BATCH_SIZE
+    )
+
+    scheduler = initialize_scheduler(optimizer, epochs, warmup_epochs, sampled_train_loader)
 
     best_val_loss = float('inf')
 
     for epoch in range(epochs):
         logger.info("Starting Epoch %d", epoch + 1)
-        avg_loss = train_one_epoch(model, sampled_loader,
+        avg_loss = train_one_epoch(model, sampled_train_loader,
                                    optimizer, scheduler, criterion, max_grad_norm)
         logger.info('Epoch %d, Loss: %.4f, LR: %.6f',
                     epoch + 1, avg_loss, scheduler.get_last_lr()[0])
 
         if epoch % 5 == 0:
-            best_val_loss = evaluate_and_save_model(model, sampled_loader, best_val_loss)
-
-
+            best_val_loss = evaluate_and_save_model(model, sampled_test_loader, best_val_loss)
 
 def main():
     """
@@ -408,7 +396,6 @@ def main():
     torch.manual_seed(42)
     logger.info("Using device: %s", device)
 
-    # Load data with smaller batch size
     base_dir = Path(__file__).resolve().parent
     if base_dir.name != "code":
         base_dir = base_dir / "code"
@@ -416,22 +403,43 @@ def main():
     processed_path = base_dir / "processed" \
         / f"Dataloader_max_nodes_{MAX_NODES}_batch_{BATCH_SIZE}_test_{TEST_RATIO}.pt"
 
-    # Use smaller batch size
-    original_loader = get_filtered_dataloaders(
+    full_loader = get_filtered_dataloaders(
     root_dir=data_dir,
     processed_path=processed_path,
     batch_size=BATCH_SIZE,
-    test_ratio=TEST_RATIO,
+    test_ratio=0.0,
     max_nodes=MAX_NODES,
     )
 
-    logger.info("Original dataset loaded with %d batches", len(original_loader))
-    logger.info("Number of features: %d", original_loader.dataset.num_features)
-    logger.info("Total number of nodes: %d",
-                sum(graph.num_nodes for graph in original_loader.dataset))
+    # Get the dataset from the full loader
+    dataset = full_loader.dataset
+
+    # Calculate split sizes
+    train_size = int((1 - TEST_RATIO) * len(dataset))
+    test_size = len(dataset) - train_size
+
+    # Split dataset
+    train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size],generator=torch.Generator().manual_seed(42))
+
+    # Create separate loaders
+    train_loader = SerializableDataLoader(
+                train_dataset,
+                batch_size=BATCH_SIZE,
+                shuffle=True
+                )
+
+    test_loader = SerializableDataLoader(
+                test_dataset,
+                batch_size=BATCH_SIZE,
+                shuffle=False
+                )
+
+    # logs
+    logger.info("Train dataset size: %d", len(train_loader.dataset))
+    logger.info("Test dataset size: %d", len(test_loader.dataset))
 
     # Initialize model
-    feature_dim = original_loader.dataset.num_features
+    feature_dim = full_loader.dataset.num_features
     model = SampleGNN(
         input_dim=feature_dim,
         hidden_dim=HIDDEN_DIM,
@@ -450,7 +458,8 @@ def main():
     logger.info("Starting training with dynamic sampling...")
     train_sampled_gnn(
         model,
-        original_loader,
+        train_loader,
+        test_loader,
         optimizer,
         epochs=EPOCHS,
         warmup_epochs=WARMUP_EPOCHS
@@ -470,8 +479,14 @@ def main():
         test_ratio=0.0,  # Use the entire dataset for evaluation
         max_nodes=MAX_NODES,
     )
-    evaluate_sampled_model(model, full_loader, "Full")
-
+    full_sampled_loader = DynamicSampledLoader(
+        original_dataset=full_loader.dataset,
+        samples_per_epoch=SAMPLES_PER_EPOCH,
+        max_distance=MAX_DISTANCE,
+        batch_size=BATCH_SIZE
+    )
+    full_loss = evaluate_model(model, full_sampled_loader)
+    logger.info("Full data loss: %.4f", full_loss)
 
 if __name__ == "__main__":
     try:

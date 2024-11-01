@@ -48,10 +48,12 @@ import logging
 from pathlib import Path
 from datetime import datetime
 import sys
+from networkx import nodes
 from tqdm import tqdm
 import torch
 from torch.optim.adamw import AdamW
-from gnns import FullGraphsGNN
+from utils import prune_graph_nodes
+from gnns import FullGraphsGNN, SampleGNN
 from prepare_full_graph_dataset import get_filtered_dataloaders, SerializableDataLoader
 
 # filtering constants
@@ -76,13 +78,18 @@ repo_root = Path(__file__).resolve().parent
 dataset_creation_path = repo_root / "dataset_creation"
 sys.path.append(str(dataset_creation_path))
 
+# create models directory if it doesn't exist
+models_dir = repo_root / "models"
+models_dir.mkdir(exist_ok=True)
+
 # Create logs directory if it doesn't exist
 log_dir = Path("logs")
 log_dir.mkdir(exist_ok=True)
 
-# Create timestamp for the log file
-timestamp = datetime.now().strftime('%d.%m.%Y_%H:%M:%S')
-log_filename = log_dir / f"training_GNN_{timestamp}.log"
+# Remove existing log file
+log_filename = log_dir / "gnn_full_graph.log"
+if log_filename.exists():
+    log_filename.unlink()
 
 file_handler = logging.FileHandler(log_filename)
 file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
@@ -126,6 +133,7 @@ def train_with_warmup(
         # Training phase
         model.train()
         epoch_loss = 0
+        nodes_num = 0
         for batch in tqdm(train_loader, desc=f'Epoch {epoch+1}/{epochs}'):
             batch = batch.to(device)
             optimizer.zero_grad()
@@ -138,9 +146,10 @@ def train_with_warmup(
             optimizer.step()
             scheduler.step()
 
-            epoch_loss += loss.item()
+            epoch_loss += loss.item() * len(batch.y)
+            nodes_num += len(batch.y)
 
-        avg_train_loss = epoch_loss / len(train_loader)
+        avg_train_loss = epoch_loss / nodes_num
 
         # Validation phase
         if epoch % eval_every == 0:
@@ -154,7 +163,7 @@ def train_with_warmup(
             if val_loss < best_loss:
                 best_loss = val_loss
                 patience_counter = 0
-                torch.save(model.state_dict(), 'best_model.pt')
+                torch.save(model.state_dict(), repo_root / 'models' /'gnn_full_graph_best_model.pth')
             else:
                 patience_counter += 1
                 if patience_counter >= patience:
@@ -232,8 +241,23 @@ def main():
     max_nodes=MAX_NODES,    # Added filtering parameters
     )
 
-    # Get the dataset from the full loader
-    dataset = full_loader.dataset
+    logger.info("Full dataset loaded with %d batches", len(full_loader))
+
+    # Apply pruning to dataset
+    pruned_dataset = []
+    total_original_nodes = 0
+    total_pruned_nodes = 0
+
+    for data in full_loader.dataset:
+        total_original_nodes += data.num_nodes
+        pruned_data = prune_graph_nodes(data)
+        total_pruned_nodes += pruned_data.num_nodes
+        pruned_dataset.append(pruned_data)
+
+    # Create new dataset with pruned graphs
+    dataset = pruned_dataset
+    logger.info("Total nodes in original dataset: %d", total_original_nodes)
+    logger.info("Total nodes in pruned dataset: %d", total_pruned_nodes)
 
     # Calculate split sizes
     train_size = int((1 - TEST_RATIO) * len(dataset))
@@ -260,15 +284,23 @@ def main():
     logger.info("Training dataset loaded with %d batches", len(train_loader))
     logger.info("Evaluation dataset loaded with %d batches", len(test_loader))
     logger.info("Feature dimension: %d", feature_dim)
-    logger.info("Total nodes in full dataset: %d", sum([data.num_nodes for data in full_loader.dataset]))
+    # logger.info("Total nodes in full dataset: %d", sum([data.num_nodes for data in full_loader.dataset]))
     logger.info("Total nodes in training dataset: %d", sum([data.num_nodes for data in train_loader.dataset]))
     logger.info("Total nodes in evaluation dataset: %d", sum([data.num_nodes for data in test_loader.dataset]))
 
-    model = FullGraphsGNN(
+    # model = FullGraphsGNN(
+    #     input_dim=feature_dim,
+    #     hidden_dim=HIDDEN_DIM,
+    #     num_layers=NUM_LAYERS,
+    #     heads=HEADS,
+    #     dropout=DROPOUT,
+    #     layer_norm=LAYER_NORM,
+    #     residual_frequency=RESIDUAL_FREQUENCY
+    # )
+    model = SampleGNN(
         input_dim=feature_dim,
         hidden_dim=HIDDEN_DIM,
         num_layers=NUM_LAYERS,
-        heads=HEADS,
         dropout=DROPOUT,
         layer_norm=LAYER_NORM,
         residual_frequency=RESIDUAL_FREQUENCY

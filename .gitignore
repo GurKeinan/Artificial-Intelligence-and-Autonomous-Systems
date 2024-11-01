@@ -5,7 +5,6 @@
 .DS_Store
 __pycache__
 
-code/logs/
 *.pkl
 *.xml
 code/processed/

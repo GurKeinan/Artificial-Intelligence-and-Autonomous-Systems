@@ -114,11 +114,12 @@ class FullGraphsGNN(torch.nn.Module):
             data (torch_geometric.data.Data): Input data containing node features `x`,
             edge indices `edge_index`, and batch indices `batch`.
         Returns:
-            torch.Tensor: Node-level predictions after applying the GNN model,
-            with values in the range [0, 1].
+            torch.Tensor: Node-level predictions after sigmoid activation.
         """
-
         x, edge_index, batch = data.x, data.edge_index, data.batch
+
+        # Ensure edge_index is long type and on correct device
+        edge_index = edge_index.long()
 
         # Make graph bidirectional and weight edges
         edge_index = torch.cat([edge_index, edge_index.flip(0)], dim=1)
@@ -133,29 +134,26 @@ class FullGraphsGNN(torch.nn.Module):
             # Store previous representation for residual
             prev_x = x
 
+            # Ensure inputs are on same device
+            x = x.to(edge_index.device)
+
             # GAT for attention-based message passing
             gat_out = self.gat_layers[i](x, edge_index)
 
             # GCN for structural feature extraction
             gcn_out = self.gcn_layers[i](x, edge_index, edge_weight)
 
-            # Combine GAT and GCN features
+            # Rest of the layer processing remains same
             x = gat_out + gcn_out
-
-            # Apply normalization
             x = self.norms[i](x, batch)
-
-            # Non-linearity and dropout
             x = F.elu(x)
             x = F.dropout(x, p=self.dropout, training=self.training)
 
-            # Residual connection with learned skip
             if i % self.residual_frequency == 0:
                 skip = self.skip_layers[i](prev_x)
                 x = x + skip
 
         node_predictions = self.prediction_head(x)
-
         return torch.sigmoid(node_predictions).view(-1)
 
 
@@ -239,12 +237,15 @@ class SampleGNN(torch.nn.Module):
         Returns:
             torch.Tensor: The predicted node labels as a 1D tensor with values in the range [0, 1].
         """
-
         x, edge_index, batch = data.x, data.edge_index, data.batch
+
+        # Ensure edge_index is long type and on correct device
+        edge_index = edge_index.long()
 
         # Make graph bidirectional and weight edges
         edge_index = torch.cat([edge_index, edge_index.flip(0)], dim=1)
-        edge_weight = self.edge_weight * torch.ones(edge_index.size(1), device=edge_index.device)
+        edge_weight = self.edge_weight * torch.ones(edge_index.size(1),
+                                                  device=edge_index.device)
 
         # Initial feature projection
         x = self.input_proj(x)
@@ -252,6 +253,9 @@ class SampleGNN(torch.nn.Module):
         # Multi-scale feature extraction
         for i in range(self.num_layers):
             prev_x = x
+
+            # Ensure inputs are on same device
+            x = x.to(edge_index.device)
 
             gcn_out = self.gcn_layers[i](x, edge_index, edge_weight)
 

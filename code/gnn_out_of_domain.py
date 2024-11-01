@@ -64,18 +64,25 @@ EPOCHS = 50
 WARMUP_EPOCHS = 10
 BATCH_SIZE = 16
 TEST_RATIO = 0.2
+TRAIN_PREFIX = "sp"
+EVAL_PREFIX = "bw"
 
 repo_root = Path(__file__).resolve().parent
 dataset_creation_path = repo_root / "dataset_creation"
 sys.path.append(str(dataset_creation_path))
 
+# create models directory if it doesn't exist
+models_dir = repo_root / "models"
+models_dir.mkdir(exist_ok=True)
+
 # Create logs directory if it doesn't exist
 log_dir = Path("logs")
 log_dir.mkdir(exist_ok=True)
 
-# Create timestamp for the log file
-timestamp = datetime.now().strftime('%d.%m.%Y_%H:%M:%S')
-log_filename = log_dir / f"out_of_domain_GNN_{timestamp}.log"
+# Remove existing log file
+log_filename = log_dir / f"gnn_ood__train_{TRAIN_PREFIX}_eval_{EVAL_PREFIX}.log"
+if log_filename.exists():
+    log_filename.unlink()
 
 file_handler = logging.FileHandler(log_filename)
 file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
@@ -112,11 +119,13 @@ def train_with_warmup(model, loader, optimizer, epochs, warmup_epochs=10, max_gr
     model = model.to(device)
     criterion = torch.nn.MSELoss()
 
+    best_loss = float('inf')
+
     for epoch in range(epochs):
         logger.info("Starting Epoch %d", epoch + 1)
         model.train()
         total_loss = 0
-        valid_batches = 0
+        nodes_num = 0
 
         for batch in tqdm(loader, total=len(loader)):
             optimizer.zero_grad()
@@ -127,17 +136,19 @@ def train_with_warmup(model, loader, optimizer, epochs, warmup_epochs=10, max_gr
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
             optimizer.step()
             scheduler.step()
-            total_loss += loss.item()
-            valid_batches += 1
+            total_loss += loss.item() * len(batch.y)
+            nodes_num += len(batch.y)
 
-        if valid_batches > 0:
-            avg_loss = total_loss / valid_batches
-            logger.info('Epoch %d, Loss: %.4f, LR: %.6f',
-                        epoch + 1, avg_loss, scheduler.get_last_lr()[0])
+
+        avg_loss = total_loss / nodes_num
+        logger.info('Epoch %d, Loss: %.4f, LR: %.6f',
+                    epoch + 1, avg_loss, scheduler.get_last_lr()[0])
 
         if epoch % 5 == 0:
-            # evaluate(model, loader, "Train")
-            evaluate(model, loader)
+            val_loss = evaluate(model, loader)
+            if val_loss < best_loss:
+                best_loss = val_loss
+                torch.save(model.state_dict(), repo_root / 'models' / f'gnn_ood_train_{TRAIN_PREFIX}_eval_{EVAL_PREFIX}_best_model.pth')
 
 def evaluate(model, loader):
     """
@@ -152,7 +163,7 @@ def evaluate(model, loader):
     """
     model.eval()
     total_loss = 0
-    num_samples = 0
+    num_nodes = 0
     criterion = torch.nn.MSELoss()
 
     with torch.no_grad():
@@ -161,13 +172,11 @@ def evaluate(model, loader):
             predictions = model(batch)
             loss = criterion(predictions, batch.y)
             total_loss += loss.item() * len(batch.y)
-            num_samples += len(batch.y)
+            num_nodes += len(batch.y)
 
-    if num_samples > 0:
-        avg_loss = total_loss / num_samples
-        logger.info('Evaluation average Loss: %.4f', avg_loss)
-        return avg_loss
-    return None
+    avg_loss = total_loss / num_nodes
+    logger.info('Evaluation average Loss: %.4f', avg_loss)
+    return avg_loss
 
 def filter_files_by_prefix(root_dir, prefix):
     """ Filter files by prefix in the root directory """
@@ -234,7 +243,7 @@ def main():
     train_loader = get_filtered_dataloaders_by_prefix(
         root_dir=data_dir,
         processed_path=bw_dir,
-        prefix="bw",
+        prefix=TRAIN_PREFIX,
         batch_size=BATCH_SIZE,
         test_ratio=0.0,
         max_nodes=MAX_NODES
@@ -244,7 +253,7 @@ def main():
     eval_loader = get_filtered_dataloaders_by_prefix(
         root_dir=data_dir,
         processed_path=sp_dir,
-        prefix="sp",
+        prefix=EVAL_PREFIX,
         batch_size=BATCH_SIZE,
         test_ratio=0.0,
         max_nodes=MAX_NODES

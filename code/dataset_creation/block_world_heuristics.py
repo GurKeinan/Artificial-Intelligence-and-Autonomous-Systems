@@ -31,7 +31,7 @@ Functions:
 
     bw_h_max(block_world_state: BlockWorldState, block_world_goal_state: BlockWorldState) -> int:
 
-    get_action_preconditions(action: MoveAction, state: Tuple[Set[namedtuple],...]) -> Set[namedtuple]:
+    get_action_preconditions(action: MoveAction) -> Set[namedtuple]:
         Return the set of propositions that are preconditions for the given action.
 
     get_prop_achievers(prop: namedtuple, actions: Set[MoveAction]) -> Set[MoveAction]:
@@ -344,7 +344,7 @@ def bw_h_max(block_world_state, block_world_goal_state):
     for idx, (action_layer, prop_layer) in enumerate(zip(action_layers, prop_layers[1:])):
         action_costs_dict = dict()
         for action in action_layer:
-            preconditions = get_action_preconditions(action, prop_layers[idx])
+            preconditions = get_action_preconditions(action)
             action_costs_dict[action] = max(prop_costs[-1][p] for p in preconditions) + 1
         action_costs.append(action_costs_dict)
 
