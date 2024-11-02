@@ -6,7 +6,6 @@ The goal is to assess the generalization capability of GNNs when applied to data
 from pathlib import Path
 import shutil
 import sys
-from tqdm import tqdm
 import torch
 from torch.optim.adamw import AdamW
 

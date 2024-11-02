@@ -2,10 +2,6 @@ import random
 import torch
 from torch_geometric.data import Data
 import logging
-from pathlib import Path
-
-from xgboost import train
-
 from prepare_graph_dataset import SerializableDataLoader
 
 

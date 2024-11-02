@@ -2,15 +2,10 @@
 Train a GNN model on the full dataset with both domains. Two GNN models are available: HeavyGNN and LightGNN.
 """
 
-import logging
 from pathlib import Path
-from datetime import datetime
 import sys
-from networkx import nodes
-from tqdm import tqdm
 import torch
 from torch.optim.adamw import AdamW
-
 from gnn_training_evaluating import train_with_warmup, evaluate
 from utils import setup_logger, get_pruned_dataloaders
 from gnn_architectures import HeavyGNN, LightGNN
@@ -19,7 +14,7 @@ from prepare_graph_dataset import get_filtered_dataloaders
 # filtering constants
 MAX_NODES = 15000
 #model constants
-MODEL = "HeavyGNN"
+MODEL = "LightGNN"
 HIDDEN_DIM = 256
 NUM_LAYERS = 4
 HEADS = 4
