@@ -52,9 +52,9 @@ from networkx import nodes
 from tqdm import tqdm
 import torch
 from torch.optim.adamw import AdamW
-from utils import prune_graph_nodes
+from utils import setup_logger, get_pruned_dataloaders
 from gnns import FullGraphsGNN, SampleGNN
-from prepare_full_graph_dataset import get_filtered_dataloaders, SerializableDataLoader
+from prepare_full_graph_dataset import get_filtered_dataloaders
 
 # filtering constants
 MAX_NODES = 15000
@@ -82,22 +82,9 @@ sys.path.append(str(dataset_creation_path))
 models_dir = repo_root / "models"
 models_dir.mkdir(exist_ok=True)
 
-# Create logs directory if it doesn't exist
-log_dir = Path("logs")
-log_dir.mkdir(exist_ok=True)
-
-# Remove existing log file
-log_filename = log_dir / "gnn_full_graph.log"
-if log_filename.exists():
-    log_filename.unlink()
-
-file_handler = logging.FileHandler(log_filename)
-file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-
-# Set up logger
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-logger.addHandler(file_handler)
+# Set up logging
+logfile_path = repo_root / "logs" / f"gnn_full_graphs.log"
+logger = setup_logger(logfile_path)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -146,10 +133,10 @@ def train_with_warmup(
             optimizer.step()
             scheduler.step()
 
-            epoch_loss += loss.item() * len(batch.y)
+            epoch_loss += loss.item() * len(batch.y) # get sse (sum of squared errors) for the batch
             nodes_num += len(batch.y)
 
-        avg_train_loss = epoch_loss / nodes_num
+        avg_train_loss = epoch_loss / nodes_num # calculate mse as the sse (sum over all samples) divided by the number of samples
 
         # Validation phase
         if epoch % eval_every == 0:
@@ -206,18 +193,6 @@ def main():
     5. Initializes the FullGraphsGNN model with specified hyperparameters.
     6. Initializes the optimizer with weight decay.
     7. Trains the model using warmup and gradient accumulation.
-    Note:
-        The function relies on several global variables and functions:
-        - `torch`: PyTorch library for tensor operations.
-        - `logger`: Logger for logging information.
-        - `device`: Device to be used for computation (e.g., 'cpu' or 'cuda').
-        - `Path`: Path class from the pathlib module for handling file paths.
-        - `MAX_NODES`, `BATCH_SIZE`, `TEST_RATIO`, `HIDDEN_DIM`, `NUM_LAYERS`,
-          `HEADS`, `DROPOUT`, `LAYER_NORM`, `RESIDUAL_FREQUENCY`, `LR`,
-          `WEIGHT_DECAY`, `EPOCHS`, `WARMUP_EPOCHS`: Hyperparameters for the model and training.
-        - `get_filtered_dataloaders`: Function to load and filter the dataset.
-        - `FullGraphsGNN`: Class representing the GNN model.
-        - `train_with_warmup`: Function to train the model with warmup and gradient accumulation.
     """
 
     # Set random seed for reproducibility
@@ -242,50 +217,14 @@ def main():
     )
 
     logger.info("Full dataset loaded with %d batches", len(full_loader))
-
-    # Apply pruning to dataset
-    pruned_dataset = []
-    total_original_nodes = 0
-    total_pruned_nodes = 0
-
-    for data in full_loader.dataset:
-        total_original_nodes += data.num_nodes
-        pruned_data = prune_graph_nodes(data)
-        total_pruned_nodes += pruned_data.num_nodes
-        pruned_dataset.append(pruned_data)
-
-    # Create new dataset with pruned graphs
-    dataset = pruned_dataset
-    logger.info("Total nodes in original dataset: %d", total_original_nodes)
-    logger.info("Total nodes in pruned dataset: %d", total_pruned_nodes)
-
-    # Calculate split sizes
-    train_size = int((1 - TEST_RATIO) * len(dataset))
-    test_size = len(dataset) - train_size
-
-    # Split dataset
-    train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size],generator=torch.Generator().manual_seed(42))
-
-    # Create separate loaders
-    train_loader = SerializableDataLoader(
-                train_dataset,
-                batch_size=BATCH_SIZE,
-                shuffle=True
-                )
-
-    test_loader = SerializableDataLoader(
-                test_dataset,
-                batch_size=BATCH_SIZE,
-                shuffle=False
-                )
     feature_dim = full_loader.dataset.num_features
 
-    # logs
-    logger.info("Training dataset loaded with %d batches", len(train_loader))
-    logger.info("Evaluation dataset loaded with %d batches", len(test_loader))
-    logger.info("Feature dimension: %d", feature_dim)
-    logger.info("Total nodes in training dataset: %d", sum([data.num_nodes for data in train_loader.dataset]))
-    logger.info("Total nodes in evaluation dataset: %d", sum([data.num_nodes for data in test_loader.dataset]))
+    # Prune and split dataset
+    train_loader, test_loader = get_pruned_dataloaders(
+        full_loader,
+        test_ratio=TEST_RATIO,
+        logger=logger
+    )
 
     # model = FullGraphsGNN(
     #     input_dim=feature_dim,

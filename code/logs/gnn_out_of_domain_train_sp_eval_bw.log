@@ -1,0 +1,133 @@
+2024-11-02 10:42:15,273 - INFO - Using device: cpu
+2024-11-02 10:42:15,273 - INFO - Loading DataLoader from /Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/processed/sp_dataloader_15000.pt
+2024-11-02 10:42:15,613 - INFO - Total nodes in original dataset: 181470
+2024-11-02 10:42:15,613 - INFO - Total nodes in pruned dataset: 91091
+2024-11-02 10:42:15,613 - INFO - Training dataset loaded with 90 batches
+2024-11-02 10:42:15,613 - INFO - Evaluation dataset loaded with 23 batches
+2024-11-02 10:42:15,613 - INFO - Feature dimension: 10
+2024-11-02 10:42:15,616 - INFO - Total nodes in training dataset: 74776
+2024-11-02 10:42:15,617 - INFO - Total nodes in evaluation dataset: 16315
+2024-11-02 10:42:15,617 - INFO - Loading DataLoader from /Users/gurkeinan/semester6/Artificial Intelligence and Autonomous Systems/code/processed/bw_dataloader_15000.pt
+2024-11-02 10:42:19,671 - INFO - Total nodes in original dataset: 3219302
+2024-11-02 10:42:19,672 - INFO - Total nodes in pruned dataset: 1577031
+2024-11-02 10:42:19,672 - INFO - Training dataset loaded with 220 batches
+2024-11-02 10:42:19,672 - INFO - Evaluation dataset loaded with 0 batches
+2024-11-02 10:42:19,672 - INFO - Feature dimension: 10
+2024-11-02 10:42:19,678 - INFO - Total nodes in training dataset: 1577031
+2024-11-02 10:42:19,678 - INFO - Total nodes in evaluation dataset: 0
+2024-11-02 10:42:19,678 - INFO - Training dataset loaded with 90 batches
+2024-11-02 10:42:19,678 - INFO - Evaluation dataset loaded with 23 batches
+2024-11-02 10:42:19,729 - INFO - Starting training...
+2024-11-02 10:42:19,729 - INFO - Starting Epoch 1
+2024-11-02 10:42:25,771 - INFO - Epoch 1, Loss: 0.0372, LR: 0.000064
+2024-11-02 10:42:26,235 - INFO - Evaluation average Loss: 0.0138
+2024-11-02 10:42:26,240 - INFO - Starting Epoch 2
+2024-11-02 10:42:31,989 - INFO - Epoch 2, Loss: 0.0105, LR: 0.000132
+2024-11-02 10:42:31,989 - INFO - Starting Epoch 3
+2024-11-02 10:42:37,940 - INFO - Epoch 3, Loss: 0.0065, LR: 0.000238
+2024-11-02 10:42:37,940 - INFO - Starting Epoch 4
+2024-11-02 10:42:44,212 - INFO - Epoch 4, Loss: 0.0051, LR: 0.000372
+2024-11-02 10:42:44,212 - INFO - Starting Epoch 5
+2024-11-02 10:42:50,664 - INFO - Epoch 5, Loss: 0.0044, LR: 0.000521
+2024-11-02 10:42:50,664 - INFO - Starting Epoch 6
+2024-11-02 10:42:56,608 - INFO - Epoch 6, Loss: 0.0037, LR: 0.000669
+2024-11-02 10:42:57,077 - INFO - Evaluation average Loss: 0.0037
+2024-11-02 10:42:57,081 - INFO - Starting Epoch 7
+2024-11-02 10:43:03,257 - INFO - Epoch 7, Loss: 0.0035, LR: 0.000803
+2024-11-02 10:43:03,257 - INFO - Starting Epoch 8
+2024-11-02 10:43:09,738 - INFO - Epoch 8, Loss: 0.0031, LR: 0.000909
+2024-11-02 10:43:09,739 - INFO - Starting Epoch 9
+2024-11-02 10:43:16,573 - INFO - Epoch 9, Loss: 0.0028, LR: 0.000977
+2024-11-02 10:43:16,573 - INFO - Starting Epoch 10
+2024-11-02 10:43:22,953 - INFO - Epoch 10, Loss: 0.0029, LR: 0.001000
+2024-11-02 10:43:22,953 - INFO - Starting Epoch 11
+2024-11-02 10:43:28,642 - INFO - Epoch 11, Loss: 0.0027, LR: 0.000998
+2024-11-02 10:43:29,123 - INFO - Evaluation average Loss: 0.0021
+2024-11-02 10:43:29,126 - INFO - Starting Epoch 12
+2024-11-02 10:43:35,361 - INFO - Epoch 12, Loss: 0.0027, LR: 0.000994
+2024-11-02 10:43:35,361 - INFO - Starting Epoch 13
+2024-11-02 10:43:41,781 - INFO - Epoch 13, Loss: 0.0023, LR: 0.000986
+2024-11-02 10:43:41,781 - INFO - Starting Epoch 14
+2024-11-02 10:43:48,157 - INFO - Epoch 14, Loss: 0.0022, LR: 0.000975
+2024-11-02 10:43:48,157 - INFO - Starting Epoch 15
+2024-11-02 10:43:54,628 - INFO - Epoch 15, Loss: 0.0024, LR: 0.000962
+2024-11-02 10:43:54,628 - INFO - Starting Epoch 16
+2024-11-02 10:44:00,832 - INFO - Epoch 16, Loss: 0.0021, LR: 0.000945
+2024-11-02 10:44:01,344 - INFO - Evaluation average Loss: 0.0018
+2024-11-02 10:44:01,350 - INFO - Starting Epoch 17
+2024-11-02 10:44:07,647 - INFO - Epoch 17, Loss: 0.0023, LR: 0.000926
+2024-11-02 10:44:07,647 - INFO - Starting Epoch 18
+2024-11-02 10:44:14,315 - INFO - Epoch 18, Loss: 0.0020, LR: 0.000904
+2024-11-02 10:44:14,315 - INFO - Starting Epoch 19
+2024-11-02 10:44:20,560 - INFO - Epoch 19, Loss: 0.0019, LR: 0.000880
+2024-11-02 10:44:20,560 - INFO - Starting Epoch 20
+2024-11-02 10:44:27,221 - INFO - Epoch 20, Loss: 0.0020, LR: 0.000853
+2024-11-02 10:44:27,221 - INFO - Starting Epoch 21
+2024-11-02 10:44:33,765 - INFO - Epoch 21, Loss: 0.0018, LR: 0.000824
+2024-11-02 10:44:34,295 - INFO - Evaluation average Loss: 0.0019
+2024-11-02 10:44:34,296 - INFO - Starting Epoch 22
+2024-11-02 10:44:41,451 - INFO - Epoch 22, Loss: 0.0017, LR: 0.000794
+2024-11-02 10:44:41,451 - INFO - Starting Epoch 23
+2024-11-02 10:44:47,610 - INFO - Epoch 23, Loss: 0.0017, LR: 0.000761
+2024-11-02 10:44:47,610 - INFO - Starting Epoch 24
+2024-11-02 10:44:53,860 - INFO - Epoch 24, Loss: 0.0019, LR: 0.000727
+2024-11-02 10:44:53,860 - INFO - Starting Epoch 25
+2024-11-02 10:45:00,630 - INFO - Epoch 25, Loss: 0.0017, LR: 0.000691
+2024-11-02 10:45:00,630 - INFO - Starting Epoch 26
+2024-11-02 10:45:07,476 - INFO - Epoch 26, Loss: 0.0016, LR: 0.000654
+2024-11-02 10:45:08,106 - INFO - Evaluation average Loss: 0.0016
+2024-11-02 10:45:08,112 - INFO - Starting Epoch 27
+2024-11-02 10:45:14,546 - INFO - Epoch 27, Loss: 0.0016, LR: 0.000616
+2024-11-02 10:45:14,546 - INFO - Starting Epoch 28
+2024-11-02 10:45:20,905 - INFO - Epoch 28, Loss: 0.0016, LR: 0.000578
+2024-11-02 10:45:20,905 - INFO - Starting Epoch 29
+2024-11-02 10:45:27,817 - INFO - Epoch 29, Loss: 0.0015, LR: 0.000539
+2024-11-02 10:45:27,818 - INFO - Starting Epoch 30
+2024-11-02 10:45:34,341 - INFO - Epoch 30, Loss: 0.0016, LR: 0.000500
+2024-11-02 10:45:34,341 - INFO - Starting Epoch 31
+2024-11-02 10:45:40,889 - INFO - Epoch 31, Loss: 0.0015, LR: 0.000460
+2024-11-02 10:45:41,308 - INFO - Evaluation average Loss: 0.0015
+2024-11-02 10:45:41,312 - INFO - Starting Epoch 32
+2024-11-02 10:45:47,815 - INFO - Epoch 32, Loss: 0.0015, LR: 0.000421
+2024-11-02 10:45:47,815 - INFO - Starting Epoch 33
+2024-11-02 10:45:54,140 - INFO - Epoch 33, Loss: 0.0015, LR: 0.000383
+2024-11-02 10:45:54,140 - INFO - Starting Epoch 34
+2024-11-02 10:46:00,445 - INFO - Epoch 34, Loss: 0.0014, LR: 0.000345
+2024-11-02 10:46:00,445 - INFO - Starting Epoch 35
+2024-11-02 10:46:06,401 - INFO - Epoch 35, Loss: 0.0013, LR: 0.000308
+2024-11-02 10:46:06,401 - INFO - Starting Epoch 36
+2024-11-02 10:46:13,231 - INFO - Epoch 36, Loss: 0.0013, LR: 0.000273
+2024-11-02 10:46:13,705 - INFO - Evaluation average Loss: 0.0014
+2024-11-02 10:46:13,709 - INFO - Starting Epoch 37
+2024-11-02 10:46:19,918 - INFO - Epoch 37, Loss: 0.0013, LR: 0.000238
+2024-11-02 10:46:19,918 - INFO - Starting Epoch 38
+2024-11-02 10:46:26,172 - INFO - Epoch 38, Loss: 0.0012, LR: 0.000206
+2024-11-02 10:46:26,172 - INFO - Starting Epoch 39
+2024-11-02 10:46:32,354 - INFO - Epoch 39, Loss: 0.0012, LR: 0.000175
+2024-11-02 10:46:32,354 - INFO - Starting Epoch 40
+2024-11-02 10:46:38,524 - INFO - Epoch 40, Loss: 0.0012, LR: 0.000146
+2024-11-02 10:46:38,524 - INFO - Starting Epoch 41
+2024-11-02 10:46:44,987 - INFO - Epoch 41, Loss: 0.0012, LR: 0.000120
+2024-11-02 10:46:45,442 - INFO - Evaluation average Loss: 0.0014
+2024-11-02 10:46:45,446 - INFO - Starting Epoch 42
+2024-11-02 10:46:51,512 - INFO - Epoch 42, Loss: 0.0012, LR: 0.000095
+2024-11-02 10:46:51,512 - INFO - Starting Epoch 43
+2024-11-02 10:46:58,018 - INFO - Epoch 43, Loss: 0.0011, LR: 0.000073
+2024-11-02 10:46:58,018 - INFO - Starting Epoch 44
+2024-11-02 10:47:04,161 - INFO - Epoch 44, Loss: 0.0011, LR: 0.000054
+2024-11-02 10:47:04,161 - INFO - Starting Epoch 45
+2024-11-02 10:47:10,580 - INFO - Epoch 45, Loss: 0.0011, LR: 0.000038
+2024-11-02 10:47:10,580 - INFO - Starting Epoch 46
+2024-11-02 10:47:17,397 - INFO - Epoch 46, Loss: 0.0011, LR: 0.000024
+2024-11-02 10:47:17,905 - INFO - Evaluation average Loss: 0.0014
+2024-11-02 10:47:17,905 - INFO - Starting Epoch 47
+2024-11-02 10:47:24,386 - INFO - Epoch 47, Loss: 0.0011, LR: 0.000014
+2024-11-02 10:47:24,386 - INFO - Starting Epoch 48
+2024-11-02 10:47:30,775 - INFO - Epoch 48, Loss: 0.0011, LR: 0.000006
+2024-11-02 10:47:30,775 - INFO - Starting Epoch 49
+2024-11-02 10:47:37,325 - INFO - Epoch 49, Loss: 0.0011, LR: 0.000002
+2024-11-02 10:47:37,325 - INFO - Starting Epoch 50
+2024-11-02 10:47:43,656 - INFO - Epoch 50, Loss: 0.0011, LR: 0.000000
+2024-11-02 10:47:43,657 - INFO - Testing the best model on the other domain
+2024-11-02 10:48:12,573 - INFO - Evaluation average Loss: 0.0028
+2024-11-02 10:48:12,573 - INFO - Error on the other domain: 0.002779

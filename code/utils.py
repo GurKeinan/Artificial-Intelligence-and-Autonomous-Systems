@@ -1,6 +1,11 @@
 import random
 import torch
 from torch_geometric.data import Data
+import logging
+from pathlib import Path
+
+from prepare_full_graph_dataset import SerializableDataLoader
+
 
 def prune_graph_nodes(data):
     """
@@ -39,3 +44,106 @@ def prune_graph_nodes(data):
     )
 
     return pruned_data
+
+def get_pruned_dataloaders(loader, test_ratio, logger):
+    """
+    Prune nodes from graphs in a PyTorch Geometric DataLoader.
+    Samples a fraction from [0.3, 0.5, 0.7], nodes with (serial_number / total_nodes) < threshold are kept.
+
+    Args:
+        loader (DataLoader): PyTorch Geometric DataLoader
+        test_ratio (float): Fraction of nodes to assign to test set
+        logger: Logger object for logging messages
+
+    Returns:
+        train_loader (DataLoader): DataLoader with pruned graphs for training
+        test_loader (DataLoader or None): DataLoader with pruned graphs for evaluation,
+            or None if test_ratio is 0
+    """
+
+    # Apply pruning to dataset
+    pruned_dataset = []
+    total_original_nodes = 0
+    total_pruned_nodes = 0
+
+    for data in loader.dataset:
+        total_original_nodes += data.num_nodes
+        pruned_data = prune_graph_nodes(data)
+        total_pruned_nodes += pruned_data.num_nodes
+        pruned_dataset.append(pruned_data)
+
+    # Create new dataset with pruned graphs
+    dataset = pruned_dataset
+    logger.info("Total nodes in original dataset: %d", total_original_nodes)
+    logger.info("Total nodes in pruned dataset: %d", total_pruned_nodes)
+
+    # Calculate split sizes
+    train_size = int((1 - test_ratio) * len(dataset))
+    test_size = len(dataset) - train_size
+
+    if test_ratio == 0:
+        train_dataset = dataset
+
+        train_loader = SerializableDataLoader(
+                train_dataset,
+                batch_size=loader.batch_size,
+                shuffle=True
+                )
+        test_loader = None
+
+    else:
+        # Split dataset
+        train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size],generator=torch.Generator().manual_seed(42))
+
+        # Create separate loaders
+        train_loader = SerializableDataLoader(
+                    train_dataset,
+                    batch_size=loader.batch_size,
+                    shuffle=True
+                    )
+
+        test_loader = SerializableDataLoader(
+                    test_dataset,
+                    batch_size=loader.batch_size,
+                    shuffle=False
+                    )
+    feature_dim = loader.dataset.num_features
+    # logs
+    logger.info("Training dataset loaded with %d batches", len(train_loader))
+    logger.info("Evaluation dataset loaded with %d batches", len(test_loader) if test_loader is not None else 0)
+    logger.info("Feature dimension: %d", feature_dim)
+    logger.info("Total nodes in training dataset: %d", sum([data.num_nodes for data in train_loader.dataset]))
+    logger.info("Total nodes in evaluation dataset: %d", sum([data.num_nodes for data in test_loader.dataset]) if test_loader is not None else 0)
+
+    return train_loader, test_loader
+
+
+
+
+def setup_logger(logfile_path):
+    """
+    Setup logger to log messages to console and file.
+
+    Args:
+        logfile_path (Path): Path to log file
+
+    Returns:
+        logger: Logger object
+    """
+    # Create logs directory if it doesn't exist
+    log_dir = logfile_path.parent
+    log_dir.mkdir(exist_ok=True)
+
+    # Remove existing log file
+    if logfile_path.exists():
+        logfile_path.unlink()
+
+    file_handler = logging.FileHandler(logfile_path)
+    file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+
+    # Set up logger
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+    logger.addHandler(file_handler)
+
+    return logger

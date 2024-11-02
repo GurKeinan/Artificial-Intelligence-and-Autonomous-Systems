@@ -25,7 +25,6 @@ import torch
 from torch_geometric.data import InMemoryDataset, Data
 from torch_geometric.loader import DataLoader
 
-
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
