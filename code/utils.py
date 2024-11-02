@@ -4,7 +4,9 @@ from torch_geometric.data import Data
 import logging
 from pathlib import Path
 
-from prepare_full_graph_dataset import SerializableDataLoader
+from xgboost import train
+
+from prepare_graph_dataset import SerializableDataLoader
 
 
 def prune_graph_nodes(data):
@@ -45,20 +47,22 @@ def prune_graph_nodes(data):
 
     return pruned_data
 
-def get_pruned_dataloaders(loader, test_ratio, logger):
+def get_pruned_dataloaders(loader, train_ratio, eval_ratio, test_ratio, logger):
     """
     Prune nodes from graphs in a PyTorch Geometric DataLoader.
     Samples a fraction from [0.3, 0.5, 0.7], nodes with (serial_number / total_nodes) < threshold are kept.
 
     Args:
         loader (DataLoader): PyTorch Geometric DataLoader
+        train_ratio (float): Fraction of nodes to assign to training set
+        eval_ratio (float): Fraction of nodes to assign to evaluation set
         test_ratio (float): Fraction of nodes to assign to test set
         logger: Logger object for logging messages
 
     Returns:
         train_loader (DataLoader): DataLoader with pruned graphs for training
-        test_loader (DataLoader or None): DataLoader with pruned graphs for evaluation,
-            or None if test_ratio is 0
+        eval_loader (DataLoader): DataLoader with pruned graphs for evaluation
+        test_loader (DataLoader or None): DataLoader with pruned graphs for testing, or None if test_ratio is 0
     """
 
     # Apply pruning to dataset
@@ -78,44 +82,79 @@ def get_pruned_dataloaders(loader, test_ratio, logger):
     logger.info("Total nodes in pruned dataset: %d", total_pruned_nodes)
 
     # Calculate split sizes
-    train_size = int((1 - test_ratio) * len(dataset))
-    test_size = len(dataset) - train_size
+    total_size = len(dataset)
+    train_size = int(train_ratio * total_size)
+    eval_size = int(eval_ratio * total_size)
+    test_size = total_size - train_size - eval_size
 
     if test_ratio == 0:
-        train_dataset = dataset
-
-        train_loader = SerializableDataLoader(
+        if eval_ratio == 0:
+            train_dataset = dataset
+            train_loader = SerializableDataLoader(
                 train_dataset,
                 batch_size=loader.batch_size,
                 shuffle=True
-                )
-        test_loader = None
+            )
+            eval_loader = None
+            test_loader = None
 
+        else:
+            train_dataset, eval_dataset = torch.utils.data.random_split(
+                dataset, [train_size, eval_size], generator=torch.Generator().manual_seed(42)
+            )
+            train_loader = SerializableDataLoader(
+                train_dataset,
+                batch_size=loader.batch_size,
+                shuffle=True
+            )
+            eval_loader = SerializableDataLoader(
+                eval_dataset,
+                batch_size=loader.batch_size,
+                shuffle=False
+            )
+            test_loader = None
     else:
-        # Split dataset
-        train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size],generator=torch.Generator().manual_seed(42))
-
-        # Create separate loaders
+        train_dataset, eval_dataset, test_dataset = torch.utils.data.random_split(
+            dataset, [train_size, eval_size, test_size], generator=torch.Generator().manual_seed(42)
+        )
         train_loader = SerializableDataLoader(
-                    train_dataset,
-                    batch_size=loader.batch_size,
-                    shuffle=True
-                    )
-
+            train_dataset,
+            batch_size=loader.batch_size,
+            shuffle=True
+        )
+        eval_loader = SerializableDataLoader(
+            eval_dataset,
+            batch_size=loader.batch_size,
+            shuffle=False
+        )
         test_loader = SerializableDataLoader(
-                    test_dataset,
-                    batch_size=loader.batch_size,
-                    shuffle=False
-                    )
+            test_dataset,
+            batch_size=loader.batch_size,
+            shuffle=False
+        )
+
+
     feature_dim = loader.dataset.num_features
     # logs
     logger.info("Training dataset loaded with %d batches", len(train_loader))
-    logger.info("Evaluation dataset loaded with %d batches", len(test_loader) if test_loader is not None else 0)
+    if eval_loader is not None:
+        logger.info("Evaluation dataset loaded with %d batches", len(eval_loader))
+    else:
+        logger.info("Evaluation dataset not created as eval_ratio is 0")
+    if test_loader is not None:
+        logger.info("Test dataset loaded with %d batches", len(test_loader))
+    else:
+        logger.info("Test dataset not created as test_ratio is 0")
     logger.info("Feature dimension: %d", feature_dim)
     logger.info("Total nodes in training dataset: %d", sum([data.num_nodes for data in train_loader.dataset]))
-    logger.info("Total nodes in evaluation dataset: %d", sum([data.num_nodes for data in test_loader.dataset]) if test_loader is not None else 0)
+    if eval_loader is not None:
+        logger.info("Total nodes in evaluation dataset: %d", sum([data.num_nodes for data in eval_loader.dataset]))
+    else:
+        logger.info("Total nodes in evaluation dataset: 0")
+    if test_loader is not None:
+        logger.info("Total nodes in test dataset: %d", sum([data.num_nodes for data in test_loader.dataset]))
 
-    return train_loader, test_loader
+    return train_loader, eval_loader, test_loader
 
 
 

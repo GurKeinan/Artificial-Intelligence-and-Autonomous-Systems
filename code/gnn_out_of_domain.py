@@ -10,9 +10,10 @@ from tqdm import tqdm
 import torch
 from torch.optim.adamw import AdamW
 
-from prepare_full_graph_dataset import FilteredTreeDataset, SerializableDataLoader,\
+from gnn_training_evaluating import evaluate, train_with_warmup
+from prepare_graph_dataset import FilteredTreeDataset, SerializableDataLoader,\
                                         load_processed_data, save_processed_data
-from gnns import FullGraphsGNN
+from gnn_architectures import HeavyGNN
 from utils import setup_logger, get_pruned_dataloaders
 
 # Filtering constants
@@ -31,11 +32,15 @@ WEIGHT_DECAY = 0.01
 EPOCHS = 50
 WARMUP_EPOCHS = 10
 BATCH_SIZE = 16
-TEST_RATIO = 0.2
+TRAIN_RATIO = 0.8
+EVAL_RATIO = 0.2
+TEST_RATIO = 0.0
 MAX_GRAD_NORM = 1.0
+PATIENCE = 10
+EVAL_EVERY = 1
 
 # Prefix constants
-TRAIN_PREFIX = "sp"
+TRAIN_PREFIX = "bw"
 EVAL_PREFIX = "sp" if TRAIN_PREFIX == "bw" else "bw"
 
 repo_root = Path(__file__).resolve().parent
@@ -51,95 +56,6 @@ logfile_path = repo_root / "logs" / f"gnn_out_of_domain_train_{TRAIN_PREFIX}_eva
 logger = setup_logger(logfile_path)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-def train_with_warmup(model, train_loader, eval_loader, optimizer, epochs, warmup_epochs, max_grad_norm):
-    """
-    Trains the model with a warmup phase.
-
-    Args:
-        model (torch.nn.Module): The GNN model to train.
-        train_loader (torch.utils.data.DataLoader): DataLoader for the training data.
-        eval_loader (torch.utils.data.DataLoader): DataLoader for the evaluation data.
-        optimizer (torch.optim.Optimizer): Optimizer for training.
-        epochs (int): Total number of training epochs.
-        warmup_epochs (int): Number of warmup epochs.
-        max_grad_norm (float): Maximum gradient norm for clipping.
-
-    Returns:
-        None
-    """
-
-
-    scheduler = torch.optim.lr_scheduler.OneCycleLR(
-        optimizer,
-        max_lr=0.001,
-        epochs=epochs,
-        steps_per_epoch=len(train_loader),
-        pct_start=warmup_epochs/epochs
-    )
-
-    model = model.to(device)
-    criterion = torch.nn.MSELoss()
-
-    best_loss = float('inf')
-
-    for epoch in range(epochs):
-        logger.info("Starting Epoch %d", epoch + 1)
-        model.train()
-        total_loss = 0
-        nodes_num = 0
-
-        for batch in tqdm(train_loader, total=len(train_loader)):
-            optimizer.zero_grad()
-            batch = batch.to(device)
-            predictions = model(batch)
-            loss = criterion(predictions, batch.y)
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
-            optimizer.step()
-            scheduler.step()
-            total_loss += loss.item() * len(batch.y)
-            nodes_num += len(batch.y)
-
-
-        avg_loss = total_loss / nodes_num
-        logger.info('Epoch %d, Loss: %.4f, LR: %.6f',
-                    epoch + 1, avg_loss, scheduler.get_last_lr()[0])
-
-        if epoch % 5 == 0:
-            val_loss = evaluate(model, eval_loader)
-            if val_loss < best_loss:
-                best_loss = val_loss
-                torch.save(model.state_dict(), repo_root / 'models' / f'gnn_ood_train_{TRAIN_PREFIX}_best_model.pth')
-
-def evaluate(model, loader):
-    """
-    Evaluates the model on the given data loader.
-
-    Args:
-        model (torch.nn.Module): The GNN model to evaluate.
-        loader (torch.utils.data.DataLoader): DataLoader for the evaluation data.
-
-    Returns:
-        float: The average loss over the evaluation dataset.
-    """
-
-    model.eval()
-    total_loss = 0
-    num_nodes = 0
-    criterion = torch.nn.MSELoss()
-
-    with torch.no_grad():
-        for batch in loader:
-            batch = batch.to(device)
-            predictions = model(batch)
-            loss = criterion(predictions, batch.y)
-            total_loss += loss.item() * len(batch.y)
-            num_nodes += len(batch.y)
-
-    avg_loss = total_loss / num_nodes
-    logger.info('Evaluation average Loss: %.4f', avg_loss)
-    return avg_loss
 
 def filter_files_by_prefix(root_dir, prefix):
     """
@@ -227,9 +143,11 @@ def main():
         test_ratio=TEST_RATIO,
         max_nodes=MAX_NODES
     )
-    train_loader, eval_loader = get_pruned_dataloaders(train_full_loader,
-                                                       test_ratio=TEST_RATIO,
-                                                       logger=logger)
+    train_loader, eval_loader, test_loader = get_pruned_dataloaders(train_full_loader,
+                                                                    train_ratio=TRAIN_RATIO,
+                                                                    eval_ratio=EVAL_RATIO,
+                                                                    test_ratio=TEST_RATIO,
+                                                                    logger=logger)
 
     test_full_loader = get_filtered_dataloaders_by_prefix(
         root_dir=data_dir,
@@ -239,13 +157,10 @@ def main():
         test_ratio=0.0,
         max_nodes=MAX_NODES
     )
-    test_loader = get_pruned_dataloaders(test_full_loader, test_ratio=0.0, logger=logger)[0]
-
-    logger.info("Training dataset loaded with %d batches", len(train_loader))
-    logger.info("Evaluation dataset loaded with %d batches", len(eval_loader))
+    test_loader = get_pruned_dataloaders(test_full_loader, train_ratio=1.0, eval_ratio=0.0, test_ratio=0.0, logger=logger)[0]
 
     feature_dim = train_full_loader.dataset.num_features
-    model = FullGraphsGNN(
+    model = HeavyGNN(
         input_dim=feature_dim,
         hidden_dim=HIDDEN_DIM,
         num_layers=NUM_LAYERS,
@@ -269,11 +184,16 @@ def main():
         optimizer,
         epochs=EPOCHS,
         warmup_epochs=WARMUP_EPOCHS,
-        max_grad_norm=MAX_GRAD_NORM
+        max_grad_norm=MAX_GRAD_NORM,
+        patience=PATIENCE,
+        eval_every=EVAL_EVERY,
+        best_model_path=models_dir / f"gnn_ood_{TRAIN_PREFIX}_best_model.pth",
+        device=device,
+        logger=logger
     )
 
     logger.info("Testing the best model on the other domain")
-    ood_loss = evaluate(model, test_loader)
+    ood_loss = evaluate(model, test_loader, device)
     logger.info("Error on the other domain: %f", ood_loss)
 
 if __name__ == "__main__":
