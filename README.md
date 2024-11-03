@@ -1,7 +1,5 @@
 # Learning to Estimate Search Progress Using Graph Neural Networks
 
-## Project Overview
-
 ## Table of Contents
 - [Introduction](#introduction)
 - [Directory Structure](#directory-structure)
