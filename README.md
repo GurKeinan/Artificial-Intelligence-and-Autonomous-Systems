@@ -54,7 +54,8 @@ Below is a detailed explaination of the code directory structure:
 │    │    ├── block_world_generator.py
 │    │    ├── block_world_heuristics.py
 │    │    ├── sliding_puzzle_generator.py
-│    │    └── sliding_puzzle_heuristics.py
+│    │    ├── sliding_puzzle_heuristics.py
+|    |    ├── explore_dataset.py
 │    ├── comparing_heuristics
 │    │    ├── parallel_comparing_heuristics.py
 |    ├── dataset
