@@ -1,0 +1,39 @@
+2024-11-02 14:02:08,109 - INFO - Using device: cuda
+2024-11-02 14:15:33,953 - INFO - Full dataset loaded with 735 batches
+2024-11-02 14:16:20,081 - INFO - Total nodes in original dataset: 9286678
+2024-11-02 14:16:20,081 - INFO - Total nodes in pruned dataset: 4609031
+2024-11-02 14:16:20,086 - INFO - Training dataset loaded with 515 batches
+2024-11-02 14:16:20,086 - INFO - Evaluation dataset loaded with 111 batches
+2024-11-02 14:16:20,086 - INFO - Test dataset loaded with 111 batches
+2024-11-02 14:16:20,086 - INFO - Feature dimension: 10
+2024-11-02 14:16:20,141 - INFO - Total nodes in training dataset: 3254249
+2024-11-02 14:16:20,153 - INFO - Total nodes in evaluation dataset: 712109
+2024-11-02 14:16:20,166 - INFO - Total nodes in test dataset: 642673
+2024-11-02 14:16:20,468 - INFO - Starting training...
+2024-11-02 14:17:17,817 - INFO - Epoch 1: Train Loss = 0.0117, Val Loss = 0.0038, LR = 0.000064
+2024-11-02 14:18:22,986 - INFO - Epoch 2: Train Loss = 0.0047, Val Loss = 0.0034, LR = 0.000132
+2024-11-02 14:19:50,632 - INFO - Epoch 3: Train Loss = 0.0036, Val Loss = 0.0025, LR = 0.000238
+2024-11-02 14:21:17,013 - INFO - Epoch 4: Train Loss = 0.0031, Val Loss = 0.0027, LR = 0.000372
+2024-11-02 14:22:44,823 - INFO - Epoch 5: Train Loss = 0.0029, Val Loss = 0.0019, LR = 0.000520
+2024-11-02 14:24:11,906 - INFO - Epoch 6: Train Loss = 0.0026, Val Loss = 0.0018, LR = 0.000668
+2024-11-02 14:25:39,144 - INFO - Epoch 7: Train Loss = 0.0024, Val Loss = 0.0036, LR = 0.000802
+2024-11-02 14:27:07,028 - INFO - Epoch 8: Train Loss = 0.0024, Val Loss = 0.0013, LR = 0.000908
+2024-11-02 14:28:33,565 - INFO - Epoch 9: Train Loss = 0.0021, Val Loss = 0.0014, LR = 0.000977
+2024-11-02 14:30:01,359 - INFO - Epoch 10: Train Loss = 0.0021, Val Loss = 0.0014, LR = 0.001000
+2024-11-02 14:31:28,740 - INFO - Epoch 11: Train Loss = 0.0020, Val Loss = 0.0011, LR = 0.000998
+2024-11-02 14:32:44,273 - INFO - Epoch 12: Train Loss = 0.0018, Val Loss = 0.0016, LR = 0.000994
+2024-11-02 14:33:31,570 - INFO - Epoch 13: Train Loss = 0.0017, Val Loss = 0.0013, LR = 0.000986
+2024-11-02 14:34:19,032 - INFO - Epoch 14: Train Loss = 0.0017, Val Loss = 0.0011, LR = 0.000976
+2024-11-02 14:35:06,256 - INFO - Epoch 15: Train Loss = 0.0016, Val Loss = 0.0011, LR = 0.000962
+2024-11-02 14:35:53,511 - INFO - Epoch 16: Train Loss = 0.0015, Val Loss = 0.0012, LR = 0.000945
+2024-11-02 14:36:40,901 - INFO - Epoch 17: Train Loss = 0.0017, Val Loss = 0.0017, LR = 0.000926
+2024-11-02 14:37:28,190 - INFO - Epoch 18: Train Loss = 0.0017, Val Loss = 0.0009, LR = 0.000904
+2024-11-02 14:38:15,379 - INFO - Epoch 19: Train Loss = 0.0015, Val Loss = 0.0010, LR = 0.000880
+2024-11-02 14:39:02,510 - INFO - Epoch 20: Train Loss = 0.0014, Val Loss = 0.0009, LR = 0.000854
+2024-11-02 14:39:49,586 - INFO - Epoch 21: Train Loss = 0.0014, Val Loss = 0.0010, LR = 0.000825
+2024-11-02 14:40:36,479 - INFO - Epoch 22: Train Loss = 0.0014, Val Loss = 0.0009, LR = 0.000794
+2024-11-02 14:41:23,513 - INFO - Epoch 23: Train Loss = 0.0014, Val Loss = 0.0010, LR = 0.000761
+2024-11-02 14:42:10,567 - INFO - Epoch 24: Train Loss = 0.0013, Val Loss = 0.0012, LR = 0.000727
+2024-11-02 14:42:57,435 - INFO - Epoch 25: Train Loss = 0.0013, Val Loss = 0.0016, LR = 0.000691
+2024-11-02 14:42:57,436 - INFO - Early stopping triggered after 25 epochs
+2024-11-02 14:43:00,981 - INFO - Error on the test set: 0.001929

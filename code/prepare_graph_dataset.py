@@ -25,7 +25,6 @@ import torch
 from torch_geometric.data import InMemoryDataset, Data
 from torch_geometric.loader import DataLoader
 
-
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -335,12 +334,12 @@ def load_processed_data(load_path):
             pass
         raise
 
-def get_filtered_dataloaders(root_dir, processed_path=None, batch_size=32,
+def get_filtered_dataloaders(root_dir, processed_path, batch_size=32,
                            test_ratio=0.2, max_nodes=1000, force_recache=False):
     """Get DataLoader with filtered data based on complexity criteria.
     Parameters:
-        root_dir (str): Path to the root directory of the dataset.
-        processed_path (str): Path to save/load processed data.
+        root_dir (Path): Path to the root directory of the dataset.
+        processed_path (Path): Path to save/load processed data.
         batch_size (int): Batch size for DataLoader.
         test_ratio (float): Ratio of data to use for testing.
         max_nodes (int): Maximum number of nodes in a tree.

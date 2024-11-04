@@ -7,9 +7,9 @@ from torch_geometric.nn import GATConv, GCNConv
 from torch_geometric.nn import GraphNorm, BatchNorm
 
 
-class FullGraphsGNN(torch.nn.Module):
+class HeavyGNN(torch.nn.Module):
     """
-    FullGraphsGNN is a graph neural network model that combines Graph Attention Networks (GAT)
+    HeavyGNN is a graph neural network model that combines Graph Attention Networks (GAT)
     and Graph Convolutional Networks (GCN) for multi-scale feature extraction and prediction.
     Args:
         input_dim (int): Dimension of the input features.
@@ -50,7 +50,7 @@ class FullGraphsGNN(torch.nn.Module):
         layer_norm=True,
         residual_frequency=2
     ):
-        super(FullGraphsGNN, self).__init__()
+        super(HeavyGNN, self).__init__()
         self.num_layers = num_layers
         self.dropout = dropout
         self.residual_frequency = residual_frequency
@@ -157,7 +157,7 @@ class FullGraphsGNN(torch.nn.Module):
         return torch.sigmoid(node_predictions).view(-1)
 
 
-class SampleGNN(torch.nn.Module):
+class LightGNN(torch.nn.Module):
     """
     A Graph Neural Network (GNN) model with sampling and residual connections.
     Args:
