@@ -29,8 +29,9 @@ git clone REPO_URL
 Then, install the required packages from the requirements file:
 
 ```bash
-pip install -r requirements.txt
+conda env create -n env_name -f requirements.yml
 ```
+This will create a conda environment called "env_name" (replace "env_name" with the desired environment name) and install the specified packages from the requirements file.
 
 ## Directory Structure
 
