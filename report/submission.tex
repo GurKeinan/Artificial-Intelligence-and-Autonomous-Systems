@@ -334,12 +334,12 @@ In this section, we present empirical evaluations of our GNN-based approaches ag
     \label{tab:performance}
     \begin{tabular}{|l|c|c|}
     \hline
-    \textbf{Model} & \textbf{MSE} & \textbf{Inference Time}\\
+    \textbf{Model} & \textbf{MSE} & \textbf{Inference Time [s]}\\
     \hline
-    VeSP & 0.1605 & \\
-    VaSP & 0.0569 & \\
-    PBP & 0.0379 & \\
-    Random Forest & 0.0328 & \\
+    VeSP & 0.1605 & 11.14 \\
+    VaSP & 0.0569 & 18.69 \\
+    PBP & 0.0379 & 9.55 \\
+    Random Forest & 0.0328 & 10.02 \\
     HeavyGNN & 0.00193 & \\
     LightGNN & 0.00151 & \\
     \hline
@@ -348,7 +348,7 @@ In this section, we present empirical evaluations of our GNN-based approaches ag
 
 
 We evaluated our GNN models against four established benchmarks: Velocity-based Search Progress (VeSP), Vacillation-based Search Progress (VaSP), Path-based Progress (PBP). An additional benchmark for learning to estimate was selected to be a Random Forest (RF) model, similarity to \citet{sudry2022learning}.
-The RF trained on $80\%$ of the available nodes with their associated features as single datapoints, with 100 estimators and a maximum depth of 10. The remaining $20\%$ of nodes were used for evaluation to avoid overfit.
+The RF trained on $80\%$ of the available nodes with their associated features as single datapoints, with 100 estimators and a maximum depth of 10. The remaining $20\%$ of nodes were used for evaluation to avoid overfit, and feature importance suggested that the model relied most on the number of children a node has and the serial number (Figure~\ref{fig:rf_features}).
 
 The benchmark evaluations were conducted on a dataset of 11,751 filtered search trees, representing diverse problem instances across both domains. \gur{More details}
 
@@ -356,12 +356,12 @@ Table \ref{tab:performance} presents each approach's Mean Squared Error (MSE) on
 
 Our GNN-based approaches significantly outperformed all benchmarks. Both HeavyGNN and LightGNN achieved an MSE of $10^{-3}$, an order of magnitude improvement over the best-performing Random Forest model. Notably, despite its simplified architecture, LightGNN showed superior performance, suggesting that the core graph structural information is more important than complex architectural features for this task.
 
-The results also present the trade-off between quality of predictions and computational efficiency during inference time. \naomi{expand...}
+The results also present the trade-off between quality of predictions and computational efficiency during inference time. All models were evaluated on inference time for the full dataset. \naomi{expand...}
 
 
 \subsection{Cross-Domain Generalization}
 
-\begin{table}[t]
+\begin{table}
     \centering
     \caption{Cross-domain generalization results}
     \label{tab:cross_domain}
@@ -389,6 +389,8 @@ In this work, we developed a graph neural network approach for predicting search
 Several limitations outside of the scope of our project offer promising directions for future work:
 
 \begin{enumerate}
+    \item \textbf{Comparison with LSTM:} Our work did not directly compare the GNN-based approach with the LSTM-based method introduced by \citet{sudry2022learning}, and the results presented here could not be comparable to the dataset used in that work. Future research should conduct a direct comparison between these two approaches on a common dataset to provide a more comprehensive evaluation of their relative performance. \naomi{revise this}
+    
     \item \textbf{Domain and Algorithm Coverage:} Our evaluation is currently limited to two classical planning domains (Blocks World and Sliding Puzzle) and a single search algorithm (A*). While these domains represent different types of search spaces, future work should evaluate and adapt the approach for a broader range of planning domains and search algorithms (e.g. GBFS, beam search). This would provide stronger validation of the method's generalizability and practical utility.
     
     \item \textbf{Scalability Challenges:} Our project faced computational limitations with larger problems that generate extensive search graphs, and was limited to search graphs with below 15,000 due to this. However, true planning problems can generate search graphs of much larger sizes, and those applications are most relevant for progress estimation.
@@ -425,6 +427,14 @@ Several limitations outside of the scope of our project offer promising directio
     \label{fig:heuristic-expanded}
 \end{figure*}
 
+\section{Benchmark Performance}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{plots/feature_importance_rf.png}
+    \caption{Features importance in the trained Random Forest model benchmark}
+    \label{fig:rf_features}
+\end{figure}
 
 
 \end{document}

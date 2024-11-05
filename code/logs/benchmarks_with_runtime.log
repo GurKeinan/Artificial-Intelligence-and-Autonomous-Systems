@@ -1,0 +1,85 @@
+2024-11-05 01:46:33,568 - INFO - Read Datasets: 
+ /Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_h_max_blocks_5_stacks_5_moves_10
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_misplaced_blocks_blocks_5_stacks_3_moves_10
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_misplaced_blocks_blocks_10_stacks_5_moves_7
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_height_difference_blocks_5_stacks_5_moves_7
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/sp_sp_misplaced_tiles_size_9_moves_10
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_height_difference_blocks_10_stacks_3_moves_15
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/sp_sp_manhattan_distance_size_9_moves_7
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_misplaced_blocks_blocks_15_stacks_5_moves_15
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_height_difference_blocks_5_stacks_5_moves_10
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_h_max_blocks_10_stacks_5_moves_10
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/sp_sp_manhattan_distance_size_9_moves_15
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_misplaced_blocks_blocks_10_stacks_5_moves_15
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/sp_sp_manhattan_distance_size_5_moves_15
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/sp_sp_misplaced_tiles_size_7_moves_15
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_misplaced_blocks_blocks_15_stacks_3_moves_15
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_height_difference_blocks_5_stacks_3_moves_10
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/sp_sp_h_max_size_7_moves_10
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_h_max_blocks_10_stacks_3_moves_10
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/sp_sp_misplaced_tiles_size_9_moves_7
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_misplaced_blocks_blocks_10_stacks_3_moves_15
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_h_max_blocks_5_stacks_3_moves_10
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_misplaced_blocks_blocks_5_stacks_5_moves_7
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_misplaced_blocks_blocks_15_stacks_5_moves_7
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/sp_sp_misplaced_tiles_size_5_moves_10
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_misplaced_blocks_blocks_5_stacks_5_moves_10
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/sp_sp_manhattan_distance_size_7_moves_10
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_h_max_blocks_5_stacks_5_moves_7
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_h_max_blocks_10_stacks_5_moves_7
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/sp_sp_h_max_size_5_moves_15
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/sp_sp_misplaced_tiles_size_9_moves_15
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_misplaced_blocks_blocks_5_stacks_3_moves_15
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_h_max_blocks_5_stacks_5_moves_15
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/sp_sp_h_max_size_7_moves_7
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/sp_sp_manhattan_distance_size_7_moves_7
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_misplaced_blocks_blocks_10_stacks_5_moves_10
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/sp_sp_manhattan_distance_size_9_moves_10
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_height_difference_blocks_5_stacks_5_moves_15
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_misplaced_blocks_blocks_15_stacks_5_moves_10
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/sp_sp_misplaced_tiles_size_5_moves_7
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_height_difference_blocks_5_stacks_3_moves_7
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_misplaced_blocks_blocks_10_stacks_3_moves_7
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_height_difference_blocks_10_stacks_3_moves_10
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_misplaced_blocks_blocks_10_stacks_3_moves_10
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/sp_sp_manhattan_distance_size_5_moves_7
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/sp_sp_h_max_size_5_moves_7
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_misplaced_blocks_blocks_15_stacks_3_moves_7
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_misplaced_blocks_blocks_5_stacks_3_moves_7
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_h_max_blocks_10_stacks_3_moves_15
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/sp_sp_h_max_size_7_moves_15
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_height_difference_blocks_5_stacks_3_moves_15
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_misplaced_blocks_blocks_15_stacks_3_moves_10
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/sp_sp_misplaced_tiles_size_7_moves_7
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_h_max_blocks_10_stacks_3_moves_7
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/sp_sp_misplaced_tiles_size_7_moves_10
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/sp_sp_manhattan_distance_size_5_moves_10
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_h_max_blocks_5_stacks_3_moves_7
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/sp_sp_h_max_size_5_moves_10
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_height_difference_blocks_10_stacks_3_moves_7
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/sp_sp_manhattan_distance_size_7_moves_15
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/sp_sp_misplaced_tiles_size_5_moves_15
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_misplaced_blocks_blocks_5_stacks_5_moves_15
+/Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_h_max_blocks_5_stacks_3_moves_15
+2024-11-05 01:46:33,607 - INFO - Found 11946 PKL files in the dataset.
+2024-11-05 01:47:47,404 - WARNING - Failed to process /Users/naomi/Documents/Technion/24_Spring/Artificial-Intelligence-and-Autonomous-Systems/code/dataset/bw_bw_height_difference_blocks_10_stacks_3_moves_15/sample_94_worker_1694.pkl: Ran out of input
+2024-11-05 01:52:14,740 - INFO - Processing Summary:
+2024-11-05 01:52:14,741 - INFO - - Accepted trees: 11751
+2024-11-05 01:52:14,741 - INFO - - Rejected trees (too complex): 194
+2024-11-05 01:52:14,741 - INFO - Loaded 11751 filtered search trees.
+2024-11-05 01:52:14,741 - INFO - Running vesp_benchmark...
+2024-11-05 01:52:25,884 - INFO - MSE for vesp_benchmark: 0.1605
+2024-11-05 01:52:25,885 - INFO - Time taken for vesp_benchmark: 11.14 seconds
+2024-11-05 01:52:26,255 - INFO - Running vasp_benchmark...
+2024-11-05 01:52:44,943 - INFO - MSE for vasp_benchmark: 0.0569
+2024-11-05 01:52:44,944 - INFO - Time taken for vasp_benchmark: 18.69 seconds
+2024-11-05 01:52:45,323 - INFO - Running pbp_benchmark...
+2024-11-05 01:52:54,870 - INFO - MSE for pbp_benchmark: 0.0379
+2024-11-05 01:52:54,871 - INFO - Time taken for pbp_benchmark: 9.55 seconds
+2024-11-05 01:52:54,871 - INFO - Running Random Forest benchmark...
+2024-11-05 01:52:54,871 - INFO - Collecting data from all trees...
+2024-11-05 01:53:56,044 - INFO - Total nodes collected: 9286678
+2024-11-05 01:53:56,978 - INFO - Training Random Forest model...
+2024-11-05 02:03:55,041 - INFO - Time taken for Random Forest: 10.02 seconds
+2024-11-05 02:03:55,085 - INFO - Train MSE for Random Forest: 0.0328
+2024-11-05 02:03:55,085 - INFO - Test MSE for Random Forest: 0.0328

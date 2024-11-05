@@ -33,6 +33,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 import numpy as np
 from tqdm import tqdm
+from time import time
 
 repo_root = Path(__file__).resolve().parent
 dataset_creation_path = repo_root / "dataset_creation"
@@ -43,7 +44,7 @@ log_dir = Path("logs")
 log_dir.mkdir(exist_ok=True)
 
 # Create timestamp for the log file
-log_filename = log_dir / "benchmarks.log"
+log_filename = log_dir / "benchmarks_with_runtime.log"
 if log_filename.exists():
     log_filename.unlink()
 
@@ -345,11 +346,14 @@ def random_forest_benchmark(trees):
     regr.fit(x_train, y_train)
 
     # Evaluate
+    start_time = time()
     train_pred = regr.predict(x_train)
     test_pred = regr.predict(x_test)
 
     train_mse = mean_squared_error(y_train, train_pred)
     test_mse = mean_squared_error(y_test, test_pred)
+
+    logger.info("Time taken for Random Forest: %.2f seconds", time() - start_time)
 
     return regr, train_mse, test_mse
 
@@ -410,6 +414,7 @@ def main():
     for benchmark_model in benchmark_models:
         results = []
         logger.info("Running %s...", benchmark_model.__name__)
+        start_time = time()
 
         for tree, name in tqdm(zip(data, names), total=len(data)):
             try:
@@ -426,6 +431,8 @@ def main():
             logger.info("MSE for %s: %.4f", benchmark_model.__name__, mse)
         else:
             logger.warning("No successful results for %s.", benchmark_model.__name__)
+        
+        logger.info("Time taken for %s: %.2f seconds", benchmark_model.__name__, time() - start_time)
 
     # Random Forest benchmark (on all trees combined)
     logger.info("Running Random Forest benchmark...")
