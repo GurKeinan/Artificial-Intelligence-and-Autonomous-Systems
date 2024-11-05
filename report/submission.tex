@@ -84,7 +84,7 @@ Throughout our project, we aim to validate the effectiveness of our approach, in
 
 We developed two distinct GNN models: a more complex architecture ("HeavyGNN") and a lightweight counterpart ("LightGNN"). To assess their performance, we performed extensive experiments in various domains and at different search progress checkpoints. Our GNN models significantly outperformed previous approaches, reducing mean squared error (MSE) by an order of magnitude compared to both traditional formula-based estimators and a Random Forest (RF) model. More importantly, our models demonstrated strong generalization capabilities. When trained on one domain and tested on another, they maintained high performance with only a modest drop in accuracy—comparable to previous methods' performance when tested within the same training domain.
 
-These findings suggest that our GNN-based approach captures fundamental patterns in search behavior that are transferable across problem types. Additionally, our lightweight architecture achieved comparable or better performance than its more complex counterpart, indicating that the structural information captured by GNNs is more meaningful than architectural sophistication for this task.
+These findings suggest that our GNN-based approach captures fundamental patterns in search behavior that are transferable across problem types. Additionally, our lightweight architecture achieved comparable or better performance than its more complex counterpart, indicating that the structural information captured by GNNs is more meaningful than architectural sophistication for this task. \gur{update}
 
 \subsection{Our Contribution}
 
@@ -275,7 +275,7 @@ The raw dataset contains approximately 2.9GB of search graphs across both domain
 
 \subsection{Dataset Pruning}
 
-To make the dataset more practical for GNN training and to better simulate real-world scenarios, we implemented a two-stage pruning strategy. First, we filtered out graphs with more than 15,000 nodes to manage computational complexity. Second, we applied a dynamic pruning approach where for each remaining graph, we randomly selected a threshold $t \in \{0.3, 0.5, 0.7\}$ and kept only nodes with $\frac{\text{serial number}}{\text{total nodes}} < t$.
+To make the dataset more practical for GNN training and to better simulate real-world scenarios, we implemented a two-stage pruning strategy. First, we filtered out graphs with more than 15,000 nodes to manage computational complexity. Second, we applied a dynamic pruning approach where for each remaining graph, we randomly selected a threshold $t \in \{0.3, 0.5, 0.7\}$ and kept only nodes with $\frac{\text{serial number}}{\text{total nodes}} < t$. Due to the random nature of the pruning, the dataset slightly vary from run to run.
 
 This second pruning stage is particularly important, as it simulates real-world scenarios where we must estimate search progress only with partial graph information. It forces our model to learn from incomplete search trajectories, making it more robust for practical applications where we don't have access to the full search graph.
 
@@ -302,11 +302,9 @@ The results show varying expanded states and orders of exploration, particularly
 
 \section{Models} \label{sec:models}
 
-Our implementation includes two distinct GNN architectures tailored for different application needs: a high-accuracy model optimized for performance and a lightweight version suited for resource-limited environments.
+We tested two distinct GNN architectures tailored for different application needs: a high-accuracy model optimized for performance and a lightweight version suited for resource-limited environments.
 
 \subsection{Full-Scale Architecture}
-
-\gur{GAT - global structure or only neighbors weighting?}
 
 The primary architecture, HeavyGNN, employs a multi-scale approach to capture both fine-grained node relationships and broader structural patterns in the search space. At its core, the model combines Graph Attention Networks (GAT) with Graph Convolutional Networks (GCN) in parallel processing streams. The GAT component uses multi-head attention mechanisms to identify important node relationships, while the GCN component captures neighborhood structures through weighted message passing. These parallel streams are combined through feature fusion, with layer normalization applied to maintain stable training dynamics.
 
@@ -325,7 +323,10 @@ In this section, we present empirical evaluations of our GNN-based approaches ag
 
 \subsection{Performance Comparison}
 
-\gur{Change - test, all data.}
+We evaluated our GNN models against four established benchmarks: Velocity-based Search Progress (VeSP), Vacillation-based Search Progress (VaSP), Path-based Progress (PBP). An additional benchmark for learning to estimate was selected to be a Random Forest (RF) model, similarity to \citet{sudry2022learning}.
+The RF trained on $80\%$ of the available nodes with their associated features as single datapoints, with 100 estimators and a maximum depth of 10. The remaining $20\%$ of nodes were used for evaluation to avoid overfit, and feature importance suggested that the model relied most on the number of children a node has and the serial number (Figure~\ref{fig:rf_features}).
+
+The data for the GNNs architectures was obtained from splitting the pruned dataset into training (70\%), validation (15\%), and test sets (15\%). The validation set was used for early stopping in the training process and the test set was used for model evaluation. The performance on each of the sets after training is reported in Table~\ref{tab:train-test}.
 
 \begin{table}[t]
     \centering
@@ -335,12 +336,15 @@ In this section, we present empirical evaluations of our GNN-based approaches ag
     \hline
     \textbf{Model} & \textbf{Train} & \textbf{Validation} & \textbf{Test} \\
     \hline
-    HeavyGNN & 0.0013 & 0.0016 & 0.001929 \\  
-    LightGNN & 0.0016 & 0.0015 & 0.001507 \\    
+    HeavyGNN & 0.0013 & 0.0016 & 0.001929 \\
+    LightGNN & 0.0016 & 0.0015 & 0.001507 \\
     \hline
     \end{tabular}
 \end{table}
 
+The benchmark evaluations were conducted on a dataset of 11,751 filtered search trees, representing diverse problem instances across both domains.
+
+Table~\ref{tab:performance} presents each approach's Mean Squared Error (MSE) on the full collection of nodes in the dataset. The traditional benchmarks showed varying performance levels, with VeSP achieving the worse score. The formula based benchmarks achieve an error magnitude of $10^{-1}$ down to $10^{-2}$, while the Random Forest model achieved the best performance with an MSE within the $10^{-2}$ range.
 
 \begin{table}[t]
     \centering
@@ -354,25 +358,13 @@ In this section, we present empirical evaluations of our GNN-based approaches ag
     VaSP & 0.0569 & 18.69 \\
     PBP & 0.0379 & 9.55 \\
     Random Forest & 0.0328 & 10.02 \\
-    HeavyGNN & 0.000982 & 72.94 \\ 
-    LightGNN & 0.001142 & 44.48 \\ 
+    HeavyGNN & 0.000982 & 72.94 \\
+    LightGNN & 0.001142 & 44.48 \\
     \hline
     \end{tabular}
 \end{table}
 
-\gur{Training details - train, eval, test.}
-
-\gur{In the table report the error on the entire dataset, add a column of the test set error.}
-
-
-We evaluated our GNN models against four established benchmarks: Velocity-based Search Progress (VeSP), Vacillation-based Search Progress (VaSP), Path-based Progress (PBP). An additional benchmark for learning to estimate was selected to be a Random Forest (RF) model, similarity to \citet{sudry2022learning}.
-The RF trained on $80\%$ of the available nodes with their associated features as single datapoints, with 100 estimators and a maximum depth of 10. The remaining $20\%$ of nodes were used for evaluation to avoid overfit, and feature importance suggested that the model relied most on the number of children a node has and the serial number (Figure~\ref{fig:rf_features}).
-
-The benchmark evaluations were conducted on a dataset of 11,751 filtered search trees, representing diverse problem instances across both domains. \gur{More details}
-
-Table \ref{tab:performance} presents each approach's Mean Squared Error (MSE) on the full collection of nodes in the dataset. The traditional benchmarks showed varying performance levels, with VeSP achieving the worse score. The formula based benchmarks achieve an error magnitude of $10^{-1}$ down to $10^{-2}$, while the Random Forest model achieved the best performance with an MSE within the $10^{-2}$ range.
-
-Our GNN-based approaches significantly outperformed all benchmarks. Both HeavyGNN and LightGNN achieved an MSE of $10^{-3}$, an order of magnitude improvement over the best-performing Random Forest model. Notably, despite its simplified architecture, LightGNN showed superior performance, suggesting that the core graph structural information is more important than complex architectural features for this task.
+Our GNN-based approaches significantly outperformed all benchmarks. Both HeavyGNN and LightGNN achieved an MSE of $10^{-3}$, an order of magnitude improvement over the best-performing Random Forest model. Notably, despite its simplified architecture, LightGNN showed superior performance, suggesting that the core graph structural information is more important than complex architectural features for this task. \gur{revise}
 
 The results also present the trade-off between quality of predictions and computational efficiency during inference time. All models were evaluated on inference time for the full dataset. \naomi{expand...}
 
@@ -407,7 +399,7 @@ In this work, we developed a graph neural network approach for predicting search
 Several limitations outside of the scope of our project offer promising directions for future work:
 
 \begin{enumerate}
-    \item \textbf{Comparison with LSTM:} Our work did not directly compare the GNN-based approach with the LSTM-based method introduced by \citet{sudry2022learning}, and the results presented here could not be comparable to the dataset used in that work. Future research should conduct a direct comparison between these two approaches on a common dataset to provide a more comprehensive evaluation of their relative performance. \naomi{revise this}
+    \item \textbf{Comparison with LSTM:} Our work did not directly compare the GNN-based approach with the LSTM-based method introduced by \citet{sudry2022learning}, and the results presented here could not be comparable to the dataset used in that work. Future research should conduct a direct comparison between these two approaches on a common dataset to provide a more comprehensive evaluation of their relative performance.
 
     \item \textbf{Domain and Algorithm Coverage:} Our evaluation is currently limited to two classical planning domains (Blocks World and Sliding Puzzle) and a single search algorithm ($A^{\star}$). While these domains represent different types of search spaces, future work should evaluate and adapt the approach for a broader range of planning domains and search algorithms (e.g. GBFS, beam search). This would provide stronger validation of the method's generalizability and practical utility.
 
