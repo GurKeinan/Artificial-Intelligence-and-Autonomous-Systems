@@ -1,0 +1,20 @@
+2024-11-05 17:36:52,768 - INFO - Using device: cpu
+2024-11-05 17:36:52,885 - INFO - Full dataset loaded with 735 batches
+2024-11-05 17:37:19,787 - INFO - Total nodes in original dataset: 9286678
+2024-11-05 17:37:19,788 - INFO - Total nodes in pruned dataset: 4694367
+2024-11-05 17:37:19,788 - INFO - Training dataset loaded with 515 batches
+2024-11-05 17:37:19,788 - INFO - Evaluation dataset loaded with 111 batches
+2024-11-05 17:37:19,788 - INFO - Test dataset loaded with 111 batches
+2024-11-05 17:37:19,788 - INFO - Feature dimension: 10
+2024-11-05 17:37:19,821 - INFO - Total nodes in training dataset: 3330382
+2024-11-05 17:37:19,829 - INFO - Total nodes in evaluation dataset: 716510
+2024-11-05 17:37:19,836 - INFO - Total nodes in test dataset: 647475
+2024-11-05 17:37:19,877 - INFO - Model loaded successfully
+2024-11-05 17:37:50,732 - INFO - Error on the training set: 0.001153
+2024-11-05 17:37:50,732 - INFO - Runtime for training set evaluation: 30.855078
+2024-11-05 17:37:57,673 - INFO - Error on the validation set: 0.001087
+2024-11-05 17:37:57,674 - INFO - Runtime for validation set evaluation: 6.941630
+2024-11-05 17:38:04,361 - INFO - Error on the test set: 0.001140
+2024-11-05 17:38:04,362 - INFO - Runtime for test set evaluation: 6.687995
+2024-11-05 17:38:04,362 - INFO - Error on the complete dataset: 0.001142
+2024-11-05 17:38:04,362 - INFO - Runtime for complete dataset evaluation: 44.484877

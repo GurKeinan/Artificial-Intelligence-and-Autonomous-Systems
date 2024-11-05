@@ -266,7 +266,7 @@ We generated problem instances with varying parameters to ensure good coverage o
 
 For each problem instance, we ran $A^{\star}$ search with all three domain-specific heuristics, recording detailed information about the search process. Each node in the resulting search graphs contains:
 \begin{itemize}
-    \item Search featuresas described in \nameref{para:learning-to-estimate}.
+    \item Search features as described in \nameref{para:learning-to-estimate}.
     \item Search trajectory information (parent node, children count).
     \item The desired prediction - search progress ($\frac{\text{serial number}}{\text{total nodes}}$).
 \end{itemize}
@@ -329,7 +329,22 @@ In this section, we present empirical evaluations of our GNN-based approaches ag
 
 \begin{table}[t]
     \centering
-    \caption{Performance comparison of different approaches}
+    \caption{MSE of GNN Models on Training, Validation \& Test Sets}
+    \label{tab:train-test}
+    \begin{tabular}{|l|c|c|c|}
+    \hline
+    \textbf{Model} & \textbf{Train} & \textbf{Validation} & \textbf{Test} \\
+    \hline
+    HeavyGNN & 0.0013 & 0.0016 & 0.001929 \\  
+    LightGNN & 0.0016 & 0.0015 & 0.001507 \\    
+    \hline
+    \end{tabular}
+\end{table}
+
+
+\begin{table}[t]
+    \centering
+    \caption{Performance comparison of different approaches on the full dataset}
     \label{tab:performance}
     \begin{tabular}{|l|c|c|}
     \hline
@@ -339,8 +354,8 @@ In this section, we present empirical evaluations of our GNN-based approaches ag
     VaSP & 0.0569 & 18.69 \\
     PBP & 0.0379 & 9.55 \\
     Random Forest & 0.0328 & 10.02 \\
-    HeavyGNN & 0.00193 & \\
-    LightGNN & 0.00151 & \\
+    HeavyGNN & 0.000982 & 72.94 \\ 
+    LightGNN & 0.001142 & 44.48 \\ 
     \hline
     \end{tabular}
 \end{table}

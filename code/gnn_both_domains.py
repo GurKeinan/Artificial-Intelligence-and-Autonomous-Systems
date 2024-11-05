@@ -3,6 +3,7 @@ Train a GNN model on the full dataset with both domains. Two GNN models are avai
 """
 
 from pathlib import Path
+from time import time
 import sys
 import torch
 from torch.optim.adamw import AdamW
@@ -44,7 +45,8 @@ models_dir = repo_root / "models"
 models_dir.mkdir(exist_ok=True)
 
 # Set up logging
-logfile_path = repo_root / "logs" / f"gnn_both_domains_{MODEL}.log"
+logfile_path = repo_root / "logs" / \
+    f"gnn_both_domains_{MODEL}_with_runtime.log"
 logger = setup_logger(logfile_path)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -114,25 +116,55 @@ def main():
     )
 
     # Train with warmup and gradient accumulation
-    logger.info("Starting training...")
-    train_with_warmup(
-        model,
-        train_loader,
-        eval_loader,
-        optimizer,
-        epochs=EPOCHS,
-        warmup_epochs=WARMUP_EPOCHS,
-        max_grad_norm=MAX_GRAD_NORM,
-        patience=PATIENCE,
-        eval_every=EVAL_EVERY,
-        best_model_path=models_dir / f"gnn_both_domains_{MODEL}_best_model.pth",
-        device=device,
-        logger=logger
-    )
+    # logger.info("Starting training...")
+    # train_with_warmup(
+    #     model,
+    #     train_loader,
+    #     eval_loader,
+    #     optimizer,
+    #     epochs=EPOCHS,
+    #     warmup_epochs=WARMUP_EPOCHS,
+    #     max_grad_norm=MAX_GRAD_NORM,
+    #     patience=PATIENCE,
+    #     eval_every=EVAL_EVERY,
+    #     best_model_path=models_dir / f"gnn_both_domains_{MODEL}_best_model.pth",
+    #     device=device,
+    #     logger=logger
+    # )
+
+    # Load the best trained model
+    if device == torch.device('cpu'):
+        model.load_state_dict(torch.load(models_dir / f"gnn_both_domains_{MODEL}_best_model.pth", map_location=device))
+    else:
+        model.load_state_dict(torch.load(models_dir / f"gnn_both_domains_{MODEL}_best_model.pth"))
+    model.to(device)
+    
+    logger.info("Model loaded successfully")
+
+    total_time_start = time()
+
+    # Evaluate on training set
+    start_time = time()
+    train_loss = evaluate(model, train_loader, device)
+    logger.info("Error on the training set: %f", train_loss)
+    logger.info("Runtime for training set evaluation: %f", time() - start_time)
+
+    # Evaluate on validation set
+    start_time = time()
+    eval_loss = evaluate(model, eval_loader, device)
+    logger.info("Error on the validation set: %f", eval_loss)
+    logger.info("Runtime for validation set evaluation: %f", time() - start_time)
 
     # Evaluate on test set
+    start_time = time()
     test_loss = evaluate(model, test_loader, device)
     logger.info("Error on the test set: %f", test_loss)
+    logger.info("Runtime for test set evaluation: %f", time() - start_time)
+
+    # Evaluate on complete dataset
+    full_error = (train_loss * len(train_loader.dataset) + eval_loss * len(eval_loader.dataset) + test_loss * len(test_loader.dataset)) / (len(train_loader.dataset) + len(eval_loader.dataset) + len(test_loader.dataset))
+    logger.info("Error on the complete dataset: %f", full_error)
+    logger.info("Runtime for complete dataset evaluation: %f", time() - total_time_start)
 
 if __name__ == "__main__":
     main()

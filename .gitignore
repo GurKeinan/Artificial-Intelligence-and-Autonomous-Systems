@@ -9,3 +9,8 @@ __pycache__
 *.xml
 code/processed/
 code/old/
+
+*.aux
+*.out
+*.blg
+*.gz
