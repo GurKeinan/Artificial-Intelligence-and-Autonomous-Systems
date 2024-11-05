@@ -323,74 +323,73 @@ In this section, we present empirical evaluations of our GNN-based approaches ag
 
 \subsection{Performance Comparison}
 
-We evaluated our GNN models against four established benchmarks: Velocity-based Search Progress (VeSP), Vacillation-based Search Progress (VaSP), Path-based Progress (PBP). An additional benchmark for learning to estimate was selected to be a Random Forest (RF) model, similarity to \citet{sudry2022learning}.
-The RF trained on $80\%$ of the available nodes with their associated features as single datapoints, with 100 estimators and a maximum depth of 10. The remaining $20\%$ of nodes were used for evaluation to avoid overfit, and feature importance suggested that the model relied most on the number of children a node has and the serial number (Figure~\ref{fig:rf_features}).
-
-The data for the GNNs architectures was obtained from splitting the pruned dataset into training (70\%), validation (15\%), and test sets (15\%). The validation set was used for early stopping in the training process and the test set was used for model evaluation. The performance on each of the sets after training is reported in Table~\ref{tab:train-test}.
+The data for the GNNs architectures was obtained from splitting the pruned dataset into training (70\%), validation (15\%), and test sets (15\%). The validation set was used for early stopping in the training process and the test set was used to evaluate the models' overfitting. The performance on each of the sets after training is reported in Table~\ref{tab:train-test} for each model.
 
 \begin{table}[t]
     \centering
-    \caption{MSE of GNN Models on Training, Validation \& Test Sets}
+    \caption{MSE (in percent) of GNN Models on Training, Validation \& Test Sets.}
     \label{tab:train-test}
     \begin{tabular}{|l|c|c|c|}
     \hline
     \textbf{Model} & \textbf{Train} & \textbf{Validation} & \textbf{Test} \\
     \hline
-    HeavyGNN & 0.0013 & 0.0016 & 0.001929 \\
-    LightGNN & 0.0016 & 0.0015 & 0.001507 \\
+    HeavyGNN & 0.13 & 0.16 & 0.193 \\
+    LightGNN & 0.16 & 0.15 & 0.151 \\
     \hline
     \end{tabular}
 \end{table}
 
-The benchmark evaluations were conducted on a dataset of 11,751 filtered search trees, representing diverse problem instances across both domains.
+We evaluated our GNN models against four established benchmarks: Velocity-based Search Progress (VeSP), Vacillation-based Search Progress (VaSP), Path-based Progress (PBP). An additional benchmark for learning to estimate was selected to be a Random Forest (RF) model, similarity to \citet{sudry2022learning}.
+The RF trained on $80\%$ of the available nodes with their associated features as single datapoints, with 100 estimators and a maximum depth of 10. The remaining $20\%$ of nodes were used for evaluation to avoid overfit, and feature importance suggested that the model relied most on the number of children a node has and the serial number (Figure~\ref{fig:rf_features}).
 
-Table~\ref{tab:performance} presents each approach's Mean Squared Error (MSE) on the full collection of nodes in the dataset. The traditional benchmarks showed varying performance levels, with VeSP achieving the worse score. The formula based benchmarks achieve an error magnitude of $10^{-1}$ down to $10^{-2}$, while the Random Forest model achieved the best performance with an MSE within the $10^{-2}$ range.
+Table~\ref{tab:performance} presents each approach's MSE on the full collection of nodes in the dataset. The traditional benchmarks showed varying performance levels, with the Random Forest model achieving the best performance. However, both GNN models significantly outperformed all benchmarks, with an order of magnitude improvement in MSE. 
 
 \begin{table}[t]
     \centering
-    \caption{Performance comparison of different approaches on the full dataset}
+    \caption{Performance comparison of different approaches on the full dataset, with MSE (in percent) and inference time (in seconds).}
     \label{tab:performance}
     \begin{tabular}{|l|c|c|}
     \hline
-    \textbf{Model} & \textbf{MSE} & \textbf{Inference Time [s]}\\
+    \textbf{Model} & \textbf{MSE} & \textbf{Inference Time}\\
     \hline
-    VeSP & 0.1605 & 11.14 \\
-    VaSP & 0.0569 & 18.69 \\
-    PBP & 0.0379 & 9.55 \\
-    Random Forest & 0.0328 & 10.02 \\
-    HeavyGNN & 0.000982 & 72.94 \\
-    LightGNN & 0.001142 & 44.48 \\
+    VeSP & 16.05 & 11.14 \\
+    VaSP & 5.69 & 18.69 \\
+    PBP & 3.79 & 9.55 \\
+    Random Forest & 3.28 & 10.02 \\
+    HeavyGNN & $0.0978 (0)^{\ast}$ & $77.52 (26.5)^{\ast}$ \\
+    LightGNN & $0.1151 (0)^{\ast}$ & $43.01 (0.74)^{\ast}$ \\
     \hline
     \end{tabular}
+    \vspace{0.5em}
+    \caption*{$^{\ast}$ The asterisk marks values which represent the mean of 10 iterations on different pruned datasets, to account for the randomness in the pruning process. In parenthesis is the standard deviation.}
+    \vspace{-2em}
 \end{table}
 
-Our GNN-based approaches significantly outperformed all benchmarks. Both HeavyGNN and LightGNN achieved an MSE of $10^{-3}$, an order of magnitude improvement over the best-performing Random Forest model. Notably, despite its simplified architecture, LightGNN showed superior performance, suggesting that the core graph structural information is more important than complex architectural features for this task. \gur{revise}
-
-The results also present the trade-off between quality of predictions and computational efficiency during inference time. All models were evaluated on inference time for the full dataset. \naomi{expand...}
-
+Notably, despite its simplified architecture, LightGNN showed nearly comparable performance to HeavyGNN and maintained the advantage over traditional benchmarks. This suggests that the core structural information captured by GNNs is more critical than architectural complexity for this task.
+The reduction in computational complexity of LightGNN also led to faster inference times with a small margin of error, compared to a longer and more varied running time with the HeavyGNN. This suggests the tradeoff between performance and computational complexity makes the LightGNN model a more practical choice for real-time applications.
 
 \subsection{Cross-Domain Generalization}
 
-\begin{table}
+To evaluate the models' ability to generalize across different problem domains, we conducted cross-domain experiments where models were trained on one domain and tested on another.
+
+\begin{table}[H]
     \centering
-    \caption{Cross-domain generalization results}
+    \caption{Cross-domain generalization results with MSE (in percent).}
     \label{tab:cross_domain}
     \begin{tabular}{|l|l|c|}
     \hline
     \textbf{Training Domain} & \textbf{Test Domain} & \textbf{MSE} \\
     \hline
-    Blocks World & Sliding Puzzle & 0.00158 \\
-    Sliding Puzzle & Blocks World & 0.00272 \\
+    Blocks World & Sliding Puzzle & 0.158 \\
+    Sliding Puzzle & Blocks World & 0.272 \\
     \hline
     \end{tabular}
 \end{table}
 
-To evaluate the models' ability to generalize across different problem domains, we conducted cross-domain experiments where models were trained on one domain and tested on another. Table \ref{tab:cross_domain} shows the results of these experiments.
-
-The results show strong generalization capabilities, both within the $10^{-3}$ order of magnitude.
+The results in Table~\ref{tab:cross_domain} show strong generalization capabilities, both within the same order of magnitude as the in-domain performance.
 However, the results contain some asymmetry, as the model trained on Blocks-World showed better generalization to Sliding-Puzzle problems compared to the opposite direction. This can be attributed to the larger size of the Blocks-World dataset compared to the Sliding-Puzzle dataset, which likely enables the model to learn more robust and generalizable features of search progress patterns.
 
-These cross-domain results are particularly impressive when compared to the in-domain performance, showing only a modest degradation in accuracy when generalizing to unseen domains. This suggests that our GNN models are learning fundamental search progress patterns that transfer well across different problem types, rather than merely memorizing domain-specific features.
+This experiment suggests that our GNN models are learning fundamental search progress patterns that transfer well across different problem types, rather than merely memorizing domain-specific features.
 
 \section{Conclusions and Future Work}
 
@@ -401,11 +400,11 @@ Several limitations outside of the scope of our project offer promising directio
 \begin{enumerate}
     \item \textbf{Comparison with LSTM:} Our work did not directly compare the GNN-based approach with the LSTM-based method introduced by \citet{sudry2022learning}, and the results presented here could not be comparable to the dataset used in that work. Future research should conduct a direct comparison between these two approaches on a common dataset to provide a more comprehensive evaluation of their relative performance.
 
-    \item \textbf{Domain and Algorithm Coverage:} Our evaluation is currently limited to two classical planning domains (Blocks World and Sliding Puzzle) and a single search algorithm ($A^{\star}$). While these domains represent different types of search spaces, future work should evaluate and adapt the approach for a broader range of planning domains and search algorithms (e.g. GBFS, beam search). This would provide stronger validation of the method's generalizability and practical utility.
+    \item \textbf{Domain and Algorithm Coverage:} Our evaluation is currently limited to two classical planning domains and a single search algorithm. While these domains represent different types of search spaces, future work should evaluate and adapt the approach for a broader range of data, which would provide stronger validation of the method's generalizability and practical utility.
 
-    \item \textbf{Scalability Challenges:} Our project faced computational limitations with larger problems that generate extensive search graphs, and was limited to search graphs with below 15,000 due to this. However, true planning problems can generate search graphs of much larger sizes, and those applications are most relevant for progress estimation.
+    \item \textbf{Scalability Challenges:} Our project faced computational limitations with larger problems, which caused graph size to be maually limited. However, planning problems with much larger sizes are most relevant for progress estimation.
 
-    While our pruning strategies help manage this issue, they introduce a trade-off between information completeness and computational feasibility. Future research should explore hierarchical graph processing methods that could help overcome these scaling limitations, while preserving structural information at different granularities. This might include developing adaptive sampling strategies or hierarchical graph representations that can efficiently handle larger search spaces.
+    While our pruning strategies help manage this issue, they introduce a trade-off between information completeness and computational feasibility. Future research should explore hierarchical graph processing methods that could help overcome these scaling limitations, such as adaptive sampling strategies or hierarchical graph representations that can efficiently handle larger search spaces.
 
     \item \textbf{Limited Feature Utilization:} Our model focuses solely on progress estimation, potentially missing opportunities to leverage the rich structural information in search graphs. Future work could explore multi-task learning approaches, training the GNN to simultaneously predict multiple search characteristics (e.g., solution quality, remaining search depth, likelihood of finding a better solution). This could improve overall performance through shared feature learning and provide more comprehensive search guidance.
 \end{enumerate}
