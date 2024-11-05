@@ -1,0 +1,112 @@
+2024-11-05 23:25:25,209 - INFO - Using device: cpu
+2024-11-05 23:25:25,330 - INFO - Full dataset loaded with 735 batches
+2024-11-05 23:25:45,018 - INFO - Total nodes in original dataset: 9286678
+2024-11-05 23:25:45,018 - INFO - Total nodes in pruned dataset: 4664978
+2024-11-05 23:25:45,019 - INFO - Training dataset loaded with 515 batches
+2024-11-05 23:25:45,019 - INFO - Evaluation dataset loaded with 111 batches
+2024-11-05 23:25:45,019 - INFO - Test dataset loaded with 111 batches
+2024-11-05 23:25:45,019 - INFO - Feature dimension: 10
+2024-11-05 23:25:45,051 - INFO - Total nodes in training dataset: 3317906
+2024-11-05 23:25:45,058 - INFO - Total nodes in evaluation dataset: 715869
+2024-11-05 23:25:45,065 - INFO - Total nodes in test dataset: 631203
+2024-11-05 23:25:45,152 - INFO - Model loaded successfully
+2024-11-05 23:26:04,337 - INFO - Total nodes in original dataset: 9286678
+2024-11-05 23:26:04,337 - INFO - Total nodes in pruned dataset: 4632071
+2024-11-05 23:26:04,337 - INFO - Training dataset loaded with 735 batches
+2024-11-05 23:26:04,337 - INFO - Evaluation dataset not created as eval_ratio is 0
+2024-11-05 23:26:04,337 - INFO - Test dataset not created as test_ratio is 0
+2024-11-05 23:26:04,337 - INFO - Feature dimension: 10
+2024-11-05 23:26:04,374 - INFO - Total nodes in training dataset: 4632071
+2024-11-05 23:26:04,374 - INFO - Total nodes in evaluation dataset: 0
+2024-11-05 23:27:14,472 - INFO - Iteration 0: Loss: 0.000991, Duration: 70.098069
+2024-11-05 23:27:33,937 - INFO - Total nodes in original dataset: 9286678
+2024-11-05 23:27:33,937 - INFO - Total nodes in pruned dataset: 4618432
+2024-11-05 23:27:33,938 - INFO - Training dataset loaded with 735 batches
+2024-11-05 23:27:33,938 - INFO - Evaluation dataset not created as eval_ratio is 0
+2024-11-05 23:27:33,938 - INFO - Test dataset not created as test_ratio is 0
+2024-11-05 23:27:33,938 - INFO - Feature dimension: 10
+2024-11-05 23:27:33,974 - INFO - Total nodes in training dataset: 4618432
+2024-11-05 23:27:33,974 - INFO - Total nodes in evaluation dataset: 0
+2024-11-05 23:28:44,533 - INFO - Iteration 1: Loss: 0.000980, Duration: 70.528832
+2024-11-05 23:29:04,667 - INFO - Total nodes in original dataset: 9286678
+2024-11-05 23:29:04,668 - INFO - Total nodes in pruned dataset: 4676594
+2024-11-05 23:29:04,668 - INFO - Training dataset loaded with 735 batches
+2024-11-05 23:29:04,668 - INFO - Evaluation dataset not created as eval_ratio is 0
+2024-11-05 23:29:04,668 - INFO - Test dataset not created as test_ratio is 0
+2024-11-05 23:29:04,668 - INFO - Feature dimension: 10
+2024-11-05 23:29:04,703 - INFO - Total nodes in training dataset: 4676594
+2024-11-05 23:29:04,704 - INFO - Total nodes in evaluation dataset: 0
+2024-11-05 23:30:12,781 - INFO - Iteration 2: Loss: 0.000963, Duration: 68.042811
+2024-11-05 23:30:32,460 - INFO - Total nodes in original dataset: 9286678
+2024-11-05 23:30:32,460 - INFO - Total nodes in pruned dataset: 4693727
+2024-11-05 23:30:32,460 - INFO - Training dataset loaded with 735 batches
+2024-11-05 23:30:32,460 - INFO - Evaluation dataset not created as eval_ratio is 0
+2024-11-05 23:30:32,460 - INFO - Test dataset not created as test_ratio is 0
+2024-11-05 23:30:32,460 - INFO - Feature dimension: 10
+2024-11-05 23:30:32,496 - INFO - Total nodes in training dataset: 4693727
+2024-11-05 23:30:32,496 - INFO - Total nodes in evaluation dataset: 0
+2024-11-05 23:33:09,569 - INFO - Iteration 3: Loss: 0.000978, Duration: 157.042775
+2024-11-05 23:33:29,442 - INFO - Total nodes in original dataset: 9286678
+2024-11-05 23:33:29,442 - INFO - Total nodes in pruned dataset: 4703471
+2024-11-05 23:33:29,442 - INFO - Training dataset loaded with 735 batches
+2024-11-05 23:33:29,442 - INFO - Evaluation dataset not created as eval_ratio is 0
+2024-11-05 23:33:29,442 - INFO - Test dataset not created as test_ratio is 0
+2024-11-05 23:33:29,442 - INFO - Feature dimension: 10
+2024-11-05 23:33:29,477 - INFO - Total nodes in training dataset: 4703471
+2024-11-05 23:33:29,478 - INFO - Total nodes in evaluation dataset: 0
+2024-11-05 23:34:39,665 - INFO - Iteration 4: Loss: 0.000968, Duration: 70.158555
+2024-11-05 23:34:59,048 - INFO - Total nodes in original dataset: 9286678
+2024-11-05 23:34:59,048 - INFO - Total nodes in pruned dataset: 4610160
+2024-11-05 23:34:59,049 - INFO - Training dataset loaded with 735 batches
+2024-11-05 23:34:59,049 - INFO - Evaluation dataset not created as eval_ratio is 0
+2024-11-05 23:34:59,049 - INFO - Test dataset not created as test_ratio is 0
+2024-11-05 23:34:59,049 - INFO - Feature dimension: 10
+2024-11-05 23:34:59,085 - INFO - Total nodes in training dataset: 4610160
+2024-11-05 23:34:59,085 - INFO - Total nodes in evaluation dataset: 0
+2024-11-05 23:36:07,890 - INFO - Iteration 5: Loss: 0.000998, Duration: 68.774390
+2024-11-05 23:36:27,541 - INFO - Total nodes in original dataset: 9286678
+2024-11-05 23:36:27,541 - INFO - Total nodes in pruned dataset: 4653572
+2024-11-05 23:36:27,541 - INFO - Training dataset loaded with 735 batches
+2024-11-05 23:36:27,541 - INFO - Evaluation dataset not created as eval_ratio is 0
+2024-11-05 23:36:27,541 - INFO - Test dataset not created as test_ratio is 0
+2024-11-05 23:36:27,541 - INFO - Feature dimension: 10
+2024-11-05 23:36:27,578 - INFO - Total nodes in training dataset: 4653572
+2024-11-05 23:36:27,578 - INFO - Total nodes in evaluation dataset: 0
+2024-11-05 23:37:35,184 - INFO - Iteration 6: Loss: 0.000993, Duration: 67.577774
+2024-11-05 23:37:54,897 - INFO - Total nodes in original dataset: 9286678
+2024-11-05 23:37:54,897 - INFO - Total nodes in pruned dataset: 4660823
+2024-11-05 23:37:54,897 - INFO - Training dataset loaded with 735 batches
+2024-11-05 23:37:54,897 - INFO - Evaluation dataset not created as eval_ratio is 0
+2024-11-05 23:37:54,897 - INFO - Test dataset not created as test_ratio is 0
+2024-11-05 23:37:54,897 - INFO - Feature dimension: 10
+2024-11-05 23:37:54,933 - INFO - Total nodes in training dataset: 4660823
+2024-11-05 23:37:54,933 - INFO - Total nodes in evaluation dataset: 0
+2024-11-05 23:39:03,346 - INFO - Iteration 7: Loss: 0.000971, Duration: 68.383943
+2024-11-05 23:39:23,082 - INFO - Total nodes in original dataset: 9286678
+2024-11-05 23:39:23,082 - INFO - Total nodes in pruned dataset: 4673723
+2024-11-05 23:39:23,082 - INFO - Training dataset loaded with 735 batches
+2024-11-05 23:39:23,082 - INFO - Evaluation dataset not created as eval_ratio is 0
+2024-11-05 23:39:23,082 - INFO - Test dataset not created as test_ratio is 0
+2024-11-05 23:39:23,082 - INFO - Feature dimension: 10
+2024-11-05 23:39:23,118 - INFO - Total nodes in training dataset: 4673723
+2024-11-05 23:39:23,118 - INFO - Total nodes in evaluation dataset: 0
+2024-11-05 23:40:30,138 - INFO - Iteration 8: Loss: 0.000973, Duration: 66.989631
+2024-11-05 23:40:49,659 - INFO - Total nodes in original dataset: 9286678
+2024-11-05 23:40:49,660 - INFO - Total nodes in pruned dataset: 4675639
+2024-11-05 23:40:49,660 - INFO - Training dataset loaded with 735 batches
+2024-11-05 23:40:49,660 - INFO - Evaluation dataset not created as eval_ratio is 0
+2024-11-05 23:40:49,660 - INFO - Test dataset not created as test_ratio is 0
+2024-11-05 23:40:49,660 - INFO - Feature dimension: 10
+2024-11-05 23:40:49,698 - INFO - Total nodes in training dataset: 4675639
+2024-11-05 23:40:49,698 - INFO - Total nodes in evaluation dataset: 0
+2024-11-05 23:41:57,341 - INFO - Iteration 9: Loss: 0.000964, Duration: 67.613693
+2024-11-05 23:41:57,341 - INFO - Results: [0.0009908574473863256, 0.0009802340682201463, 0.000963148565943804, 0.0009782381855400345, 0.0009675811178512607, 0.0009978050272145783, 0.000992869878830909, 0.0009714290423307563, 0.000972544729900826, 0.0009635174800672]
+2024-11-05 23:41:57,341 - INFO - Mean: 0.000978
+2024-11-05 23:41:57,341 - INFO - Variance: 0.000000
+2024-11-05 23:41:57,341 - INFO - Confidence interval: 0.000007
+2024-11-05 23:41:57,341 - INFO - Confidence interval bounds: (0.0009705014930343858, 0.0009851436156227823)
+2024-11-05 23:41:57,341 - INFO - Results: [70.09806895256042, 70.52883195877075, 68.04281115531921, 157.04277515411377, 70.15855503082275, 68.77438998222351, 67.57777404785156, 68.38394284248352, 66.98963117599487, 67.61369299888611]
+2024-11-05 23:41:57,342 - INFO - Mean: 77.521047
+2024-11-05 23:41:57,342 - INFO - Variance: 703.966591
+2024-11-05 23:41:57,342 - INFO - Confidence interval: 16.444933
+2024-11-05 23:41:57,342 - INFO - Confidence interval bounds: (61.076114813591275, 93.96597984621401)

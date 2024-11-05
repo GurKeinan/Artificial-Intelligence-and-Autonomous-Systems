@@ -15,7 +15,7 @@ from prepare_graph_dataset import get_filtered_dataloaders
 # filtering constants
 MAX_NODES = 15000
 #model constants
-MODEL = "LightGNN"
+MODEL = "HeavyGNN"
 HIDDEN_DIM = 256
 NUM_LAYERS = 4
 HEADS = 4
@@ -46,10 +46,83 @@ models_dir.mkdir(exist_ok=True)
 
 # Set up logging
 logfile_path = repo_root / "logs" / \
-    f"gnn_both_domains_{MODEL}_with_runtime.log"
+    f"gnn_both_domains_{MODEL}_ci.log"
 logger = setup_logger(logfile_path)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+
+def results_on_loaders(model, train_loader, eval_loader, test_loader):
+    total_time_start = time()
+
+    # Evaluate on training set
+    start_time = time()
+    train_loss = evaluate(model, train_loader, device)
+    logger.info("Error on the training set: %f", train_loss)
+    logger.info("Runtime for training set evaluation: %f", time() - start_time)
+
+    # Evaluate on validation set
+    start_time = time()
+    eval_loss = evaluate(model, eval_loader, device)
+    logger.info("Error on the validation set: %f", eval_loss)
+    logger.info("Runtime for validation set evaluation: %f",
+                time() - start_time)
+
+    # Evaluate on test set
+    start_time = time()
+    test_loss = evaluate(model, test_loader, device)
+    logger.info("Error on the test set: %f", test_loss)
+    logger.info("Runtime for test set evaluation: %f", time() - start_time)
+
+    # Evaluate on complete dataset
+    full_error = (train_loss * len(train_loader.dataset) + eval_loss * len(eval_loader.dataset) + test_loss *
+                  len(test_loader.dataset)) / (len(train_loader.dataset) + len(eval_loader.dataset) + len(test_loader.dataset))
+    logger.info("Error on the complete dataset: %f", full_error)
+    logger.info("Runtime for complete dataset evaluation: %f",
+                time() - total_time_start)
+
+
+def get_eval_ci(model, full_loader, iterations=5):
+    """
+    Get confidence intervals for the loss and runtime of the model on the full dataset.
+    """
+
+    results = []
+    durations = []
+
+    for i in range(iterations):
+        model.eval()
+        new_loader, _, _ = get_pruned_dataloaders(
+            full_loader,
+            train_ratio=1,
+            eval_ratio=0,
+            test_ratio=0,
+            logger=logger
+        )
+
+        start_time = time()
+        loss = evaluate(model, new_loader, device)
+        duration = time() - start_time
+
+        results.append(loss)
+        durations.append(duration)
+
+        logger.info("Iteration %d: Loss: %f, Duration: %f", i, loss, duration)
+
+    # Save results to file
+    for value in [results, durations]:
+        logger.info("Results: %s", value)
+
+        mean = sum(value) / len(value)
+        variance = sum((x - mean) ** 2 for x in value) / len(value)
+        ci = 1.96 * (variance / len(value)) ** 0.5
+        ci_bounds = (mean - ci, mean + ci)
+
+        logger.info("Mean: %f", mean)
+        logger.info("Variance: %f", variance)
+        logger.info("Confidence interval: %f", ci)
+        logger.info("Confidence interval bounds: %s", ci_bounds)
+
 
 def main():
     """
@@ -70,11 +143,11 @@ def main():
 
     # Use smaller batch size
     full_loader = get_filtered_dataloaders(
-    root_dir=data_dir,
-    processed_path=processed_path,
-    batch_size=BATCH_SIZE,
-    test_ratio=TEST_RATIO,
-    max_nodes=MAX_NODES,    # Added filtering parameters
+        root_dir=data_dir,
+        processed_path=processed_path,
+        batch_size=BATCH_SIZE,
+        test_ratio=TEST_RATIO,
+        max_nodes=MAX_NODES,    # Added filtering parameters
     )
 
     logger.info("Full dataset loaded with %d batches", len(full_loader))
@@ -141,30 +214,7 @@ def main():
     
     logger.info("Model loaded successfully")
 
-    total_time_start = time()
-
-    # Evaluate on training set
-    start_time = time()
-    train_loss = evaluate(model, train_loader, device)
-    logger.info("Error on the training set: %f", train_loss)
-    logger.info("Runtime for training set evaluation: %f", time() - start_time)
-
-    # Evaluate on validation set
-    start_time = time()
-    eval_loss = evaluate(model, eval_loader, device)
-    logger.info("Error on the validation set: %f", eval_loss)
-    logger.info("Runtime for validation set evaluation: %f", time() - start_time)
-
-    # Evaluate on test set
-    start_time = time()
-    test_loss = evaluate(model, test_loader, device)
-    logger.info("Error on the test set: %f", test_loss)
-    logger.info("Runtime for test set evaluation: %f", time() - start_time)
-
-    # Evaluate on complete dataset
-    full_error = (train_loss * len(train_loader.dataset) + eval_loss * len(eval_loader.dataset) + test_loss * len(test_loader.dataset)) / (len(train_loader.dataset) + len(eval_loader.dataset) + len(test_loader.dataset))
-    logger.info("Error on the complete dataset: %f", full_error)
-    logger.info("Runtime for complete dataset evaluation: %f", time() - total_time_start)
+    get_eval_ci(model, full_loader, iterations=10)
 
 if __name__ == "__main__":
     main()
