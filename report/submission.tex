@@ -64,7 +64,7 @@
 \begin{abstract}
     Estimating search progress in heuristic search algorithms remains a crucial challenge in automated planning and problem-solving. While previous approaches have derived formulas of progress estimation, and further work has shown promise in learning to predict search progress, these methods overlook the structural information embedded in the search graph created by the search algorithm.
     We propose a novel approach using Graph Neural Networks (GNNs) to leverage this valuable structural information for more accurate search progress estimations. By representing the search space as a graph where nodes correspond to expanded states and edges to state transitions, the GNN can learn meaningful patterns in the search trajectory, which indicate progress toward the goal.
-    Using multiple domain-related and general heuristic functions, we evaluate our approach on two distinct domains, Blocks-World and Sliding-Window Puzzle. This diversity in problem spaces allows us to assess the model's generalization ability across different search problems.
+    We evaluate our approach using multiple domain-related and general heuristic functions, on two distinct domains - Blocks-World and Sliding-Window Puzzle. This diversity in problem spaces allows us to assess the model's generalization ability across different search problems.
     Our results demonstrate that a GNN-based approach can effectively capture search patterns and provide more accurate progress estimates compared to previous methods. This improvement holds both in unseen problem instances and across different domains, whether on complete search graphs or intermediate ones observed throughout the search.
     This suggests that incorporating structural information through GNNs leads to more robust and generalizable search progress estimation, potentially improving the efficiency of heuristic search algorithms in practical applications.
 \footnote{The materials of this project are available on \href{https://github.com/GurKeinan/Artificial-Intelligence-and-Autonomous-Systems}{GitHub}.}
@@ -78,13 +78,13 @@ Classic approaches to predicting search progress have primarily relied on predef
 
 More recent works have tried to leverage machine learning methods for this task, like the LSTM-based approach introduced in \citet{sudry2022learning}. This approach represented a substantial advance by learning directly from search behavior, and allows for fine-tuning heuristic and domain-specific characteristics. However, these methods are restricted by treating search nodes as sequential data points, failing to capture the full structural relationships inherent in the search space. This limitation can result in less accurate progress predictions, particularly in complex or large-scale search problems.
 
-In this work, we propose a novel approach using Graph Neural Networks (GNNs) to leverage this valuable structural information for more accurate search progress estimations. By learning on search graphs induced by informed search algorithmis like $A^{\star}$ \citep{hart1968formal}, where the nodes correspond to expanded states and edges to state transitions, the GNN can learn meaningful patterns in the search trajectory. This approach enables the model to learn from both the features of individual nodes and the relationships between them.
+In this work, we propose a novel approach using Graph Neural Networks (GNNs) to leverage this valuable structural information for more accurate search progress estimations. By learning on search graphs induced by informed search algorithms like $A^{\star}$ \citep{hart1968formal}, where the nodes correspond to expanded states and edges to state transitions, the GNN can learn meaningful patterns in the search trajectory. This approach enables the model to learn from both the features of individual nodes and the relationships between them.
 
-Throughout our project, we aim to validate the effectiveness of our approach, investigating its capacity to enhance search progress predictions through structural insights. We developed a comprehensive framework for creating and analyzing search graphs of varying sizes and difficulties from classical planning problems, with a focus on 2 domains: Blocks-World and Sliding-Puzzle. These generated problem instances were solved using $A^{\star}$ search with multiple domain-based and general heuristics, and the generated search trees were saved as graph structures. Our framework captures rich information about both the structure of the search graph, as well as rich node features such as heuristic values, depth in the search tree, branching factors, and various search progress indicators as introduced by \citet{sudry2022learning}.
+Throughout our project, we aim to validate the effectiveness of our approach, investigating its capacity to enhance search progress predictions through structural insights. We developed a comprehensive framework for creating and analyzing search graphs of varying sizes and difficulties from classical planning problems, with a focus on 2 domains: Blocks-World and Sliding-Puzzle. These generated problem instances were solved using $A^{\star}$ search with multiple domain-based and general heuristics, and the generated search trees were saved as graph structures. Our framework captures information about both the structure of the search graph, as well as rich node features such as heuristic values, depth in the search tree, branching factors, and various search progress indicators as introduced by \citet{sudry2022learning}.
 
 We developed two distinct GNN models: a more complex architecture ("HeavyGNN") and a lightweight counterpart ("LightGNN"). To assess their performance, we performed extensive experiments in various domains and at different search progress checkpoints. Our GNN models significantly outperformed previous approaches, reducing mean squared error (MSE) by an order of magnitude compared to both traditional formula-based estimators and a Random Forest (RF) model. More importantly, our models demonstrated strong generalization capabilities. When trained on one domain and tested on another, they maintained high performance with only a modest drop in accuracy—comparable to previous methods' performance when tested within the same training domain.
 
-These findings suggest that our GNN-based approach captures fundamental patterns in search behavior that are transferable across problem types. Additionally, our lightweight architecture achieved comparable or better performance than its more complex counterpart, indicating that the structural information captured by GNNs is more meaningful than architectural sophistication for this task. \gur{update}
+These findings suggest that our GNN-based approach captures fundamental patterns in search behavior that are transferable across problem types. Additionally, our lightweight architecture achieved comparable or better performance than its more complex counterpart, indicating that the structural information captured by GNNs is more meaningful than architectural sophistication for this task.
 
 \subsection{Our Contribution}
 
@@ -92,7 +92,7 @@ Our work offers four key contributions:
 \begin{enumerate}
     \item A novel approach for estimating search progress using graph neural networks, significantly outperforming previous sequence-based approaches.
     \item A comprehensive framework for constructing and collecting search graphs from classical planning problems, incorporating flexible problem generators, multiple heuristics, and pruning.
-    \item Two distinct GNN architectures, optimized for different computational requirements.
+    \item Two distinct GNN models, optimized for different computational requirements.
     \item Empirical demonstration of strong cross-domain generalization, showing an order of magnitude improvement in prediction accuracy over traditional methods even when generalizing to unseen domains.
 \end{enumerate}
 
@@ -102,9 +102,9 @@ In this section, we briefly review the necessary background for the rest of the 
 
 \subsection{Planning Problems and Heuristic Search}
 
-A state-space search problem is defined by a tuple $T = \langle S, S_0, S_g, A, f, c\rangle$, where: $S$ is the finite set of all possible states, $S_0$ is the initial state, $S_g$ is the set of goal states, $A(s) \subset A$ represents the set of actions applicable in state $s$, $f: S \times A \rightarrow S$ is the state transition function mapping a state and action to a resultant state, and $c(s,a)$ is the cost function for action $a$ performed from state $s$.
+A state-space search problem is defined by a tuple $T = \langle S, S_0, S_g, A, f, c\rangle$, where $S$ is the finite set of all possible states, $S_0$ is the initial state, $S_g$ is the set of goal states, $A(s) \subset A$ represents the set of actions applicable in state $s$, $f: S \times A \rightarrow S$ is the state transition function mapping a state and action to a resultant state, and $c(s,a)$ is the cost function for action $a$ performed from state $s$.
 
-To solve planning problems efficiently one might use informed search algorithms such as $A^{\star}$ \citep{hart1968formal}. Such algorithms use a heuristic function $h(s)$ that estimates the cost from any state $s$ to a goal state to guide exploration of the search space. For example, $A^{\star}$ maintains an open list of nodes to explore, ordering them by $f(s) = g(s) + h(s)$, where $g(s)$ is the known cost from the initial state to $s$. The algorithm expands nodes by generating their successors and appending them to the open list. The search is terminated when reaching a goal state or exhausting the search space.
+To solve planning problems efficiently one might use informed search algorithms such as $A^{\star}$ \citep{hart1968formal}. The algorithms use a heuristic function $h(s)$ that estimates the cost from any state $s$ to a goal state, to guide exploration of the search space. For example, $A^{\star}$ maintains an open list of nodes to explore, ordering them by $f(s) = g(s) + h(s)$, where $g(s)$ is the known cost from the initial state to $s$. The algorithm expands nodes by generating their successors and appending them to the open list. The search is terminated when reaching a goal state or exhausting the search space.
 
 \subsection{Search Progress Estimation}
 
@@ -164,6 +164,7 @@ Previous work on search progress estimation has explored various approaches, ran
 
 Several methods leveraged sampling and probabilistic techniques. \citet{lelis2014estimating} introduced a general approach using random walks to estimate branching factors and solution depth. \citet{kilby2006estimating} showed that by weighting branches according to their probability of being visited during random probing, and using recursive assumptions about search tree symmetry, search tree size could be estimated effectively. \citet{hutter2014algorithm} proposed methods for algorithm runtime prediction using instance features and machine learning, though this focused on overall runtime rather than progress during search.
 
+\paragraph{Formula Based Estimators}
 A significant contribution came from \citet{thayer2012we}, who introduced several estimators based on search behavior.
 
 The Velocity-based Search Progress (VeSP) estimator calculates search \emph{velocity} as:
@@ -175,7 +176,7 @@ where $h_0$ is the initial state's heuristic value and $h_{min}$ is the minimum 
     VeSP(Gen_A(P)) = \frac{Gen_A(P)}{Gen_A(P) + SE_V}
 \end{equation}
 
-The Vacillation-based Search Progress (VaSP) estimator improves upon VeSP by incorporating expansion delay - the average number of expansions between when a node is generated and when it is expanded. Using $\Delta e$ to denote \emph{expansion delay}, it estimates remaining effort as:
+The Vacillation-based Search Progress (VaSP) estimator improves upon VeSP by incorporating \emph{expansion delay} - the average number of expansions between when a node is generated and when it is expanded. Using $\Delta e$ to denote expansion delay, it estimates remaining effort as:
 \begin{equation*}
     SE_e = \Delta e \times h_{min}
 \end{equation*}
@@ -261,7 +262,7 @@ We generated problem instances with varying parameters to ensure good coverage o
 
 For each problem instance, we ran $A^{\star}$ search with all three domain-specific heuristics, recording detailed information about the search process. Each node in the resulting search graphs contains:
 \begin{itemize}
-    \item Search features as described in \nameref{para:learning-to-estimate}.
+    \item Search features as described in \nameref{para:learning-to-estimate}, with the addition of $N_{f_{max}}$ - number of nodes since the last $f_{max}$ update.
     \item Search trajectory information (parent node, children count).
     \item The desired prediction - search progress ($\frac{\text{serial number}}{\text{total nodes}}$).
 \end{itemize}
@@ -274,11 +275,7 @@ To make the dataset more practical for GNN training and to better simulate real-
 
 This second pruning stage is particularly important, as it simulates real-world scenarios where we must estimate search progress only with partial graph information. It forces our model to learn from incomplete search trajectories, making it more robust for practical applications where we don't have access to the full search graph.
 
-Without this pruning, we hypothesize that the models would trivially learn to compute progress by finding the maximum serial number through message passing and simply dividing each node's serial number by this maximum.
-
 Each graph maintains parent-child relationships between nodes, representing the actual search tree structure explored by $A^{\star}$. When pruning nodes, we carefully preserve edge connections between remaining nodes to maintain the graph's structural integrity. This preservation of structural information, even in pruned graphs, is crucial for our GNN-based approach, differentiating it from previous sequence-based methods.
-
-Notably, notice that unlike previous methods, in which a node only has information about nodes with smaller serial number, our model assumes that a parent node can have access to its children in inference. We don't find it problematic since any node in the search graph can equally contribute to estimating the remaining search effort - knowing the progress at any point can help predict how many more nodes need to be expanded to reach the goal. Therefore, if information about future nodes can help better estimate progress at an earlier node, there's no fundamental reason to restrict the model to only past knowledge. This view aligns with how search algorithms operate in practice, where both historical and frontier information contribute to understanding the search space.
 
 \subsection{Diversity Analysis}
 
@@ -293,7 +290,7 @@ Additionally, Figure~\ref{fig:heuristic-order} indicates that even among the ove
 \end{equation}
 where $N_i(s)$ is the serial number (expansion order) of state $s$ under heuristic $h_i$.
 
-The results show varying expanded states and orders of exploration, particularly among larger problem instances. This diversity in search behaviors ensures our dataset captures a wide range of patterns and progress trajectories.
+These results show varying expanded states and orders of exploration, particularly among larger problem instances. This diversity in search behaviors ensures our dataset captures a wide range of patterns and progress trajectories.
 
 \section{Models} \label{sec:models}
 
@@ -311,20 +308,20 @@ LightGNN provides an efficient alternative designed for scenarios where computat
 
 The lightweight model shares the same input projection and basic structure as HeavyGNN but replaces the parallel GAT-GCN streams with pure GCN processing. It maintains the use of layer normalization and residual connections while reducing the overall parameter count and computational complexity.
 
-Both architectures share common training elements including dropout regularization (p=0.2), residual connections every two layers, and edge weight learning. The models are trained using AdamW optimizer with weight decay and a learning rate warmup schedule.
+\subsection{Training Procedure}
+
+Both architectures share common training elements including dropout regularization (p=0.2), residual connections every two layers, and edge weight learning. They are trained using AdamW optimizer with weight decay, batch size of 16, and a learning rate warmup schedule.
+
+On a machine with CUDA, the HeavyGNN model trained for 25 epochs before early stopping, with a training duration of approximately 27 minutes. The LightGNN model stopped after only 14 epochs and a training duration of approximately 15 minutes.
 
 \section{Experiments}
 In this section, we present empirical evaluations of our GNN-based approaches against traditional benchmarks, and analyze their generalization capabilities across domains.
 
-\subsection{Performance Comparison}
-
-The data for the GNNs architectures was obtained from splitting the pruned dataset into training (70\%), validation (15\%), and test sets (15\%). The validation set was used for early stopping in the training process and the test set was used to evaluate the models' overfitting. The performance on each of the sets after training is reported in Table~\ref{tab:train-test} for each model.
-
-\begin{table}[t]
+\begin{table}[H]
     \centering
     \caption{MSE (in percent) of GNN Models on Training, Validation \& Test Sets.}
     \label{tab:train-test}
-    \begin{tabular}{|l|c|c|c|}
+    \begin{tabular}{ |l|c|c|c|}
     \hline
     \textbf{Model} & \textbf{Train} & \textbf{Validation} & \textbf{Test} \\
     \hline
@@ -334,9 +331,17 @@ The data for the GNNs architectures was obtained from splitting the pruned datas
     \end{tabular}
 \end{table}
 
+\subsection{GNN Performance}
+
+The data for the GNNs architectures was obtained from splitting the pruned dataset into training (70\%), validation (15\%), and test sets (15\%). The validation set was used for early stopping in the training process and the test set was used to evaluate the models' overfitting. The performance on each of the sets after training is reported in Table~\ref{tab:train-test} for each model.
+
+The evaluation of the models includes nodes sampled from the entire search space, rather than just the terminal nodes. This distinction is crucial, as it ensures that the model learns to predict a range of values, rather than simply reflecting the pruning thresholds which are correlated with search progress. We emphasize that, contrary to initial impressions, predicting the progress of intermediate nodes is as valuable as predicting the final nodes' progress, since this information can be leveraged to infer the progress of the final nodes. This is a part of our justification for allowing bidirectional edges, as any information in the partial search graph that can be used to predict intermediate nodes search progress is valuable, even if it is considered as future information.
+
+\subsection{Performance Comparison}
+
 We evaluated our GNN models against the three traditional benchmarks formally presented in \nameref{subsec:related_work},
 and an additional Random Forest (RF) learning model, similar to the one used in \citet{sudry2022learning}.
-The RF trained on $80\%$ of the available nodes with their associated features as single datapoints, with 100 estimators and a maximum depth of 10. The remaining $20\%$ of nodes were used for evaluation to avoid overfit, and feature importance suggested that the model relied most on the number of children a node has and the serial number (Figure~\ref{fig:rf_features}).
+The RF trained on $80\%$ of the available nodes with their associated features as single datapoints, with 100 estimators and a maximum depth of 10. The remaining $20\%$ of nodes were used to check for overfitting, and feature importance suggested that the model relied most on the number of children a node has and the serial number (Figure~\ref{fig:rf_features}).
 
 Table~\ref{tab:performance} presents each approach's MSE on the full collection of nodes in the dataset. The traditional benchmarks showed varying performance levels, with the Random Forest model achieving the best performance. However, both GNN models significantly outperformed all benchmarks, with an order of magnitude improvement in MSE.
 
@@ -398,7 +403,7 @@ Several limitations outside of the scope of our project offer promising directio
 
     \item \textbf{Domain and Algorithm Coverage:} Our evaluation is currently limited to two classical planning domains and a single search algorithm. While these domains represent different types of search spaces, future work should evaluate and adapt the approach for a broader range of data, which would provide stronger validation of the method's generalizability and practical utility.
 
-    \item \textbf{Scalability Challenges:} Our project faced computational limitations with larger problems, which caused graph size to be maually limited. However, planning problems with much larger sizes are most relevant for progress estimation.
+    \item \textbf{Scalability Challenges:} Our project faced computational limitations with larger problems, which caused graph size to be manually limited. However, planning problems with much larger sizes are most relevant for progress estimation.
 
     While our pruning strategies help manage this issue, they introduce a trade-off between information completeness and computational feasibility. Future research should explore hierarchical graph processing methods that could help overcome these scaling limitations, such as adaptive sampling strategies or hierarchical graph representations that can efficiently handle larger search spaces.
 

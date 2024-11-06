@@ -1,5 +1,3 @@
-""" Block World Problem Generator """
-
 import random
 from typing import List, Tuple, Optional
 

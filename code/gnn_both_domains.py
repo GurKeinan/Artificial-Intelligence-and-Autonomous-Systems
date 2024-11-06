@@ -15,7 +15,7 @@ from prepare_graph_dataset import get_filtered_dataloaders
 # filtering constants
 MAX_NODES = 15000
 #model constants
-MODEL = "HeavyGNN"
+MODEL = "LightGNN"
 HIDDEN_DIM = 256
 NUM_LAYERS = 4
 HEADS = 4
@@ -53,6 +53,9 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 def results_on_loaders(model, train_loader, eval_loader, test_loader):
+    """
+    Evaluate the model on the training, validation, and test sets.
+    """
     total_time_start = time()
 
     # Evaluate on training set
@@ -189,32 +192,36 @@ def main():
     )
 
     # Train with warmup and gradient accumulation
-    # logger.info("Starting training...")
-    # train_with_warmup(
-    #     model,
-    #     train_loader,
-    #     eval_loader,
-    #     optimizer,
-    #     epochs=EPOCHS,
-    #     warmup_epochs=WARMUP_EPOCHS,
-    #     max_grad_norm=MAX_GRAD_NORM,
-    #     patience=PATIENCE,
-    #     eval_every=EVAL_EVERY,
-    #     best_model_path=models_dir / f"gnn_both_domains_{MODEL}_best_model.pth",
-    #     device=device,
-    #     logger=logger
-    # )
+    logger.info("Starting training...")
+    train_with_warmup(
+        model,
+        train_loader,
+        eval_loader,
+        optimizer,
+        epochs=EPOCHS,
+        warmup_epochs=WARMUP_EPOCHS,
+        max_grad_norm=MAX_GRAD_NORM,
+        patience=PATIENCE,
+        eval_every=EVAL_EVERY,
+        best_model_path=models_dir /
+        f"gnn_both_domains_{MODEL}_best_model.pth",
+        device=device,
+        logger=logger
+    )
 
     # Load the best trained model
-    if device == torch.device('cpu'):
-        model.load_state_dict(torch.load(models_dir / f"gnn_both_domains_{MODEL}_best_model.pth", map_location=device))
-    else:
-        model.load_state_dict(torch.load(models_dir / f"gnn_both_domains_{MODEL}_best_model.pth"))
-    model.to(device)
-    
-    logger.info("Model loaded successfully")
+    # if device == torch.device('cpu'):
+    #     model.load_state_dict(torch.load(models_dir / f"gnn_both_domains_{MODEL}_best_model.pth", map_location=device))
+    # else:
+    #     model.load_state_dict(torch.load(models_dir / f"gnn_both_domains_{MODEL}_best_model.pth"))
+    # model.to(device)
+    # logger.info("Model loaded successfully")
 
-    get_eval_ci(model, full_loader, iterations=10)
+    # Evaluate the model on the dataloaders:
+    results_on_loaders(model, train_loader, eval_loader, test_loader)
+
+    # Evaluate the model on the full dataset with confidence intervals:
+    # get_eval_ci(model, full_loader, iterations=10)
 
 if __name__ == "__main__":
     main()
