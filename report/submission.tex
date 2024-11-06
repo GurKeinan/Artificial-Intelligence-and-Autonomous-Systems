@@ -158,18 +158,13 @@ Multi-head attention runs parallel attention mechanisms, each potentially captur
 These components can be complemented by learnable edge weights and improved aggregation schemes, allowing the model to better capture the importance of different node relationships and structural patterns in the graph. Together, these elements enable more robust and expressive GNN architectures while maintaining stable training dynamics.
 
 
-\subsection{Related Work}
+\subsection{Related Work}\label{subsec:related_work}
 
-Previous approaches to search progress estimation can be broadly categorized into offline and online methods.
+Previous work on search progress estimation has explored various approaches, ranging from analytical formulas to machine learning methods. Early work focused on analytical approaches for specific domains. \citet{breyer2008recent} developed specialized formulas for predicting A* node expansions in the 15-puzzle using pattern database statistics.
 
-\gur{The partition here is off, a lot of the 'offline' methods are online.}
+Several methods leveraged sampling and probabilistic techniques. \citet{lelis2014estimating} introduced a general approach using random walks to estimate branching factors and solution depth. \citet{kilby2006estimating} showed that by weighting branches according to their probability of being visited during random probing, and using recursive assumptions about search tree symmetry, search tree size could be estimated effectively. \citet{hutter2014algorithm} proposed methods for algorithm runtime prediction using instance features and machine learning, though this focused on overall runtime rather than progress during search.
 
-\paragraph{Offline methods} Attempt to predict search effort before the search begins by analyzing the search space structure.
-
-\citet{breyer2008recent} focused on predicting $A^{\star}$ node expansions for the 15-puzzle, developing analytical formulas based on pattern database statistics.
-\citet{lelis2014estimating} introduced a more general approach using sampling to estimate search tree size, where they performed random walks in the search space to estimate branching factors and solution depth. \citet{hutter2014algorithm} proposed methods for algorithm runtime prediction using instance features and machine learning, though this focused on overall runtime rather than progress during search. \citet{kilby2006estimating} showed that by weighting branches according to their probability of being visited during random probing, and by using recursive assumptions about search tree symmetry, search tree size could be estimated effectively without advance knowledge of the tree structure.
-
-\paragraph{Online methods} Make predictions during the search process using information from expanded nodes. \citet{thayer2012we} introduced several influential estimators:
+A significant contribution came from \citet{thayer2012we}, who introduced several estimators based on search behavior.
 
 The Velocity-based Search Progress (VeSP) estimator calculates search \emph{velocity} as:
 \begin{equation*}
@@ -258,11 +253,11 @@ The key to training effective GNN models for search progress estimation lies in 
 
 For the Blocks-World domain, we implemented two domain-specific heuristics. The misplaced blocks heuristic ($h_{\text{misplaced}}$) counts blocks not in their goal positions. The height difference heuristic ($h_{\text{height}}$) sums absolute differences between current and goal stack heights divided by 2, offering an admissible but sometimes uninformative estimate - when stack heights match but blocks are misplaced.
 
-Likewise, we implemented two heuristics specific to Sliding-Puzzle domain. The Manhattan distance heuristic ($h_{\text{manhattan}}$) sums the minimum vertical and horizontal moves needed for each tile, providing an admissible and computationally efficient estimate. The misplaced tiles heuristic ($h_{\text{misplaced}}$) counts tiles not in their goal positions, offering a quick but less informative estimate compared to Manhattan distance.
+Likewise, we implemented two heuristics specific to Sliding-Puzzle domain. The Manhattan distance heuristic ($h_{\text{manhattan}}$) sums the minimum vertical and horizontal moves needed for each tile, providing an admissible and computationally efficient estimate. The misplaced tiles heuristic ($h_{\text{misplaced}}$) counts tiles not in their goal positions, offering a quick but less informative estimate compared to $h_{\text{manhattan}}$.
 
 For both domains, we implemented the general heuristic $h_{\max}$. First, it constructs a relaxed planning graph by ignoring delete effects. The heuristic then computes costs layer by layer: each proposition in layer $i+1$ gets the minimum cost among all actions achieving it plus their precondition costs from layer $i$. Action costs are determined by the maximum cost among their preconditions plus 1. This process continues until reaching a fixed point or encountering all goal propositions, with the final $h_{\max}$ value being the maximum cost among the goal propositions. This provides a more sophisticated admissible estimate by capturing action dependencies, though at higher computational cost.
 
-We generated problem instances with varying parameters to ensure good coverage of the problem space. For Blocks World, we varied the number of blocks \gur{(5-10), number of stacks (3-5), and solution depth (7-15 moves). For Sliding Puzzles, we generated boards of different sizes (5x5 to 9x9) with varying solution depths (7-15 moves)}. For each parameter combination, we generated 200 random problem instances.
+We generated problem instances with varying parameters to ensure good coverage of the problem space. For Blocks World, we varied the number of blocks (5-15), number of stacks (3-5), and solution depth (7-15 moves). For Sliding Puzzles, we generated boards of different sizes (5x5 to 9x9) with varying solution depths (7-15 moves). For each parameter combination, we generated about 200 random instances.
 
 For each problem instance, we ran $A^{\star}$ search with all three domain-specific heuristics, recording detailed information about the search process. Each node in the resulting search graphs contains:
 \begin{itemize}
@@ -298,7 +293,7 @@ Additionally, Figure~\ref{fig:heuristic-order} indicates that even among the ove
 \end{equation}
 where $N_i(s)$ is the serial number (expansion order) of state $s$ under heuristic $h_i$.
 
-The results show varying expanded states and orders of exploration, particularly among larger problem instances. This diversity in search behaviors ensures our dataset captures a wide range of search patterns and progress trajectories.
+The results show varying expanded states and orders of exploration, particularly among larger problem instances. This diversity in search behaviors ensures our dataset captures a wide range of patterns and progress trajectories.
 
 \section{Models} \label{sec:models}
 
@@ -339,10 +334,11 @@ The data for the GNNs architectures was obtained from splitting the pruned datas
     \end{tabular}
 \end{table}
 
-We evaluated our GNN models against four established benchmarks: Velocity-based Search Progress (VeSP), Vacillation-based Search Progress (VaSP), Path-based Progress (PBP). An additional benchmark for learning to estimate was selected to be a Random Forest (RF) model, similarity to \citet{sudry2022learning}.
+We evaluated our GNN models against the three traditional benchmarks formally presented in \nameref{subsec:related_work},
+and an additional Random Forest (RF) learning model, similar to the one used in \citet{sudry2022learning}.
 The RF trained on $80\%$ of the available nodes with their associated features as single datapoints, with 100 estimators and a maximum depth of 10. The remaining $20\%$ of nodes were used for evaluation to avoid overfit, and feature importance suggested that the model relied most on the number of children a node has and the serial number (Figure~\ref{fig:rf_features}).
 
-Table~\ref{tab:performance} presents each approach's MSE on the full collection of nodes in the dataset. The traditional benchmarks showed varying performance levels, with the Random Forest model achieving the best performance. However, both GNN models significantly outperformed all benchmarks, with an order of magnitude improvement in MSE. 
+Table~\ref{tab:performance} presents each approach's MSE on the full collection of nodes in the dataset. The traditional benchmarks showed varying performance levels, with the Random Forest model achieving the best performance. However, both GNN models significantly outperformed all benchmarks, with an order of magnitude improvement in MSE.
 
 \begin{table}[t]
     \centering
@@ -393,7 +389,7 @@ This experiment suggests that our GNN models are learning fundamental search pro
 
 \section{Conclusions and Future Work}
 
-In this work, we developed a graph neural network approach for predicting search progress in heuristic search algorithms. We created a comprehensive framework for generating and collecting search graphs from two classical planning domains, implementing multiple heuristics for each domain. Our results demonstrate that GNNs can effectively leverage the structural information in search graphs to provide significantly more accurate progress estimates compared to traditional methods, with our models achieving an order of magnitude improvement in prediction accuracy. Furthermore, the strong cross-domain generalization results suggest that GNNs can learn fundamental patterns in search behavior that transcend specific problem domains.
+In this work, we developed a graph neural network approach for predicting search progress of informed search algorithms. We created a comprehensive framework for generating and collecting search graphs from two classical planning domains, implementing multiple heuristics for each domain. Our results demonstrate that GNNs can effectively leverage the structural information in search graphs to provide significantly more accurate progress estimates compared to traditional methods, with our models achieving an order of magnitude improvement in prediction accuracy. Furthermore, the strong cross-domain generalization results suggest that GNNs can learn fundamental patterns in search behavior that transcend specific problem domains.
 
 Several limitations outside of the scope of our project offer promising directions for future work:
 
@@ -410,11 +406,14 @@ Several limitations outside of the scope of our project offer promising directio
 \end{enumerate}
 
 % If you have citations, uncomment the following line
+
+\onecolumn
+
 \bibliography{aaai24}
 
 \clearpage
 \appendix
-\onecolumn
+
 
 \section{Heuristic Comparison}
 \label{app:heuristic-comparison}
