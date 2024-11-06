@@ -21,7 +21,7 @@ sys.path.append(str(dataset_creation_path))
 
 from sliding_puzzle_generator import generate_sliding_puzzle_problem
 from block_world_generator import generate_block_world_problem
-from general_a_star import a_star
+from general_A_star import a_star
 from sliding_puzzle_heuristics import sp_manhattan_distance, sp_misplaced_tiles, sp_h_max
 from block_world_heuristics import bw_misplaced_blocks, bw_height_difference, bw_h_max
 
