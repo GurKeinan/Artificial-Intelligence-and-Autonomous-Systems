@@ -1,5 +1,7 @@
 # Learning to Estimate Search Progress Using Graph Neural Networks
 
+Read our full [report](https://github.com/GurKeinan/Artificial-Intelligence-and-Autonomous-Systems/blob/main/report/submission.pdf) here.
+
 ## Table of Contents
 - [Learning to Estimate Search Progress Using Graph Neural Networks](#learning-to-estimate-search-progress-using-graph-neural-networks)
   - [Table of Contents](#table-of-contents)
